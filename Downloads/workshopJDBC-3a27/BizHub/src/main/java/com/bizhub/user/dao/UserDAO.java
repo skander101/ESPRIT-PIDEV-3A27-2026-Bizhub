@@ -26,49 +26,49 @@ public class UserDAO {
 
     public void create(User u) throws SQLException {
         // Insert all fields used by signup. Irrelevant role fields should be NULL.
+        // NOTE: admin_role / role_start_date were removed from DB, so they must not appear in this statement.
         String sql = "INSERT INTO `user`(" +
                 "email, password_hash, user_type, full_name, phone, address, bio, avatar_url, " +
                 "company_name, sector, company_description, website, founding_date, " +
                 "business_type, delivery_zones, payment_methods, return_policy, " +
                 "investment_sector, max_budget, years_experience, represented_company, " +
                 "specialty, hourly_rate, availability, cv_url, " +
-                "admin_role, role_start_date, is_active" +
-                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                "is_active" +
+                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
         try (PreparedStatement pst = cnx.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             int i = 1;
-            pst.setString(i++, u.getEmail());
+            setStringOrNull(pst, i++, u.getEmail());
+            // password_hash is NOT NULL in DB; keep strict
             pst.setString(i++, u.getPasswordHash());
             pst.setString(i++, u.getUserType());
             pst.setString(i++, u.getFullName());
-            pst.setString(i++, u.getPhone());
-            pst.setString(i++, u.getAddress());
-            pst.setString(i++, u.getBio());
-            pst.setString(i++, u.getAvatarUrl());
 
-            pst.setString(i++, u.getCompanyName());
-            pst.setString(i++, u.getSector());
-            pst.setString(i++, u.getCompanyDescription());
-            pst.setString(i++, u.getWebsite());
+            setStringOrNull(pst, i++, u.getPhone());
+            setStringOrNull(pst, i++, u.getAddress());
+            setStringOrNull(pst, i++, u.getBio());
+            setStringOrNull(pst, i++, u.getAvatarUrl());
+
+            setStringOrNull(pst, i++, u.getCompanyName());
+            setStringOrNull(pst, i++, u.getSector());
+            setStringOrNull(pst, i++, u.getCompanyDescription());
+            setStringOrNull(pst, i++, u.getWebsite());
             setLocalDateOrNull(pst, i++, u.getFoundingDate());
 
-            pst.setString(i++, u.getBusinessType());
-            pst.setString(i++, u.getDeliveryZones());
-            pst.setString(i++, u.getPaymentMethods());
-            pst.setString(i++, u.getReturnPolicy());
+            setStringOrNull(pst, i++, u.getBusinessType());
+            setStringOrNull(pst, i++, u.getDeliveryZones());
+            setStringOrNull(pst, i++, u.getPaymentMethods());
+            setStringOrNull(pst, i++, u.getReturnPolicy());
 
-            pst.setString(i++, u.getInvestmentSector());
+            setStringOrNull(pst, i++, u.getInvestmentSector());
             setBigDecimalOrNull(pst, i++, u.getMaxBudget());
             setIntegerOrNull(pst, i++, u.getYearsExperience());
-            pst.setString(i++, u.getRepresentedCompany());
+            setStringOrNull(pst, i++, u.getRepresentedCompany());
 
-            pst.setString(i++, u.getSpecialty());
+            setStringOrNull(pst, i++, u.getSpecialty());
             setBigDecimalOrNull(pst, i++, u.getHourlyRate());
-            pst.setString(i++, u.getAvailability());
-            pst.setString(i++, u.getCvUrl());
-
-            pst.setString(i++, u.getAdminRole());
-            setLocalDateOrNull(pst, i++, u.getRoleStartDate());
+            setStringOrNull(pst, i++, u.getAvailability());
+            setStringOrNull(pst, i++, u.getCvUrl());
 
             pst.setBoolean(i++, u.isActive());
 
@@ -125,47 +125,46 @@ public class UserDAO {
 
     public void update(User u) throws SQLException {
         // Update profile/admin editable fields (email/password handled elsewhere)
+        // NOTE: admin_role / role_start_date were removed from DB.
         String sql = "UPDATE `user` SET " +
                 "user_type=?, full_name=?, phone=?, address=?, bio=?, avatar_url=?, " +
                 "company_name=?, sector=?, company_description=?, website=?, founding_date=?, " +
                 "business_type=?, delivery_zones=?, payment_methods=?, return_policy=?, " +
                 "investment_sector=?, max_budget=?, years_experience=?, represented_company=?, " +
                 "specialty=?, hourly_rate=?, availability=?, cv_url=?, " +
-                "admin_role=?, role_start_date=?, is_active=? " +
+                "is_active=? " +
                 "WHERE user_id=?";
 
         try (PreparedStatement pst = cnx.prepareStatement(sql)) {
             int i = 1;
             pst.setString(i++, u.getUserType());
             pst.setString(i++, u.getFullName());
-            pst.setString(i++, u.getPhone());
-            pst.setString(i++, u.getAddress());
-            pst.setString(i++, u.getBio());
-            pst.setString(i++, u.getAvatarUrl());
 
-            pst.setString(i++, u.getCompanyName());
-            pst.setString(i++, u.getSector());
-            pst.setString(i++, u.getCompanyDescription());
-            pst.setString(i++, u.getWebsite());
+            setStringOrNull(pst, i++, u.getPhone());
+            setStringOrNull(pst, i++, u.getAddress());
+            setStringOrNull(pst, i++, u.getBio());
+            setStringOrNull(pst, i++, u.getAvatarUrl());
+
+            setStringOrNull(pst, i++, u.getCompanyName());
+            setStringOrNull(pst, i++, u.getSector());
+            setStringOrNull(pst, i++, u.getCompanyDescription());
+            setStringOrNull(pst, i++, u.getWebsite());
             setLocalDateOrNull(pst, i++, u.getFoundingDate());
 
-            pst.setString(i++, u.getBusinessType());
-            pst.setString(i++, u.getDeliveryZones());
-            pst.setString(i++, u.getPaymentMethods());
-            pst.setString(i++, u.getReturnPolicy());
+            setStringOrNull(pst, i++, u.getBusinessType());
+            setStringOrNull(pst, i++, u.getDeliveryZones());
+            setStringOrNull(pst, i++, u.getPaymentMethods());
+            setStringOrNull(pst, i++, u.getReturnPolicy());
 
-            pst.setString(i++, u.getInvestmentSector());
+            setStringOrNull(pst, i++, u.getInvestmentSector());
             setBigDecimalOrNull(pst, i++, u.getMaxBudget());
             setIntegerOrNull(pst, i++, u.getYearsExperience());
-            pst.setString(i++, u.getRepresentedCompany());
+            setStringOrNull(pst, i++, u.getRepresentedCompany());
 
-            pst.setString(i++, u.getSpecialty());
+            setStringOrNull(pst, i++, u.getSpecialty());
             setBigDecimalOrNull(pst, i++, u.getHourlyRate());
-            pst.setString(i++, u.getAvailability());
-            pst.setString(i++, u.getCvUrl());
-
-            pst.setString(i++, u.getAdminRole());
-            setLocalDateOrNull(pst, i++, u.getRoleStartDate());
+            setStringOrNull(pst, i++, u.getAvailability());
+            setStringOrNull(pst, i++, u.getCvUrl());
 
             pst.setBoolean(i++, u.isActive());
             pst.setInt(i++, u.getUserId());
@@ -245,9 +244,7 @@ public class UserDAO {
         u.setAvailability(rs.getString("availability"));
         u.setCvUrl(rs.getString("cv_url"));
 
-        u.setAdminRole(rs.getString("admin_role"));
-        Date roleStartDate = rs.getDate("role_start_date");
-        u.setRoleStartDate(roleStartDate == null ? null : roleStartDate.toLocalDate());
+        // admin_role / role_start_date removed from DB
 
         u.setActive(rs.getBoolean("is_active"));
 
@@ -270,5 +267,10 @@ public class UserDAO {
     private static void setBigDecimalOrNull(PreparedStatement pst, int idx, BigDecimal value) throws SQLException {
         if (value == null) pst.setNull(idx, Types.DECIMAL);
         else pst.setBigDecimal(idx, value);
+    }
+
+    private static void setStringOrNull(PreparedStatement pst, int idx, String value) throws SQLException {
+        if (value == null || value.trim().isEmpty()) pst.setNull(idx, Types.VARCHAR);
+        else pst.setString(idx, value.trim());
     }
 }

@@ -15,6 +15,19 @@
 .root {
     -fx-font-family: "Inter", "Segoe UI", "System";
     -fx-background-color: #0A192F;
+
+    /* Text selection in inputs */
+    -fx-accent: #E8A93A;              /* used by many controls for selection */
+    -fx-focus-color: #E8A93A;
+    -fx-faint-focus-color: rgba(232, 169, 58, 0.18);
+
+    /* Fallbacks for Modena lookups */
+    -fx-text-box-border: rgba(232, 169, 58, 0.35);
+    -fx-control-inner-background: #172A45;
+    -fx-inner-border: transparent;
+
+    /* Separators */
+    -fx-box-border: rgba(232, 169, 58, 0.30);
 }
 
 /* Color Reference (for maintainability):

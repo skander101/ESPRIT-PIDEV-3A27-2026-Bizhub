@@ -13,7 +13,45 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>21.0.5</javafx.version>
+        <!-- Default platform (overridden by OS-specific profiles below) -->
+        <javafx.platform>linux</javafx.platform>
     </properties>
+
+    <profiles>
+        <profile>
+            <id>windows</id>
+            <activation>
+                <os>
+                    <family>Windows</family>
+                </os>
+            </activation>
+            <properties>
+                <javafx.platform>win</javafx.platform>
+            </properties>
+        </profile>
+        <profile>
+            <id>mac</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <properties>
+                <javafx.platform>mac</javafx.platform>
+            </properties>
+        </profile>
+        <profile>
+            <id>linux</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                </os>
+            </activation>
+            <properties>
+                <javafx.platform>linux</javafx.platform>
+            </properties>
+        </profile>
+    </profiles>
 
     <dependencies>
         <!-- Fixed MySQL connector dependency -->
@@ -23,16 +61,18 @@
             <version>8.0.33</version>
         </dependency>
 
-        <!-- JavaFX dependencies without classifier for now -->
+        <!-- JavaFX dependencies with platform classifier for runtime natives -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
             <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
             <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
         </dependency>
 
         <dependency>
@@ -44,32 +84,17 @@
 
     <build>
         <plugins>
-            <!-- os-maven-plugin must be first -->
-            <plugin>
-                <groupId>kr.motd.maven</groupId>
-                <artifactId>os-maven-plugin</artifactId>
-                <version>1.7.1</version>
-                <executions>
-                    <execution>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>detect</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!-- Updated javafx-maven-plugin with newer version -->
+            <!-- JavaFX run plugin -->
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>com.bizhub.Main</mainClass>
-                    <!-- Add OS detection properties -->
-                    <options>
-                        <option>-Dos.detected.classifier=${os.detected.classifier}</option>
-                    </options>
+                    <jvmArgs>
+                        <!-- Prevent Modena stylesheet from logging casting warnings on some Linux builds -->
+                        <jvmArg>-Djavafx.userAgentStylesheetUrl=none</jvmArg>
+                    </jvmArgs>
                 </configuration>
             </plugin>
 
