@@ -22,10 +22,9 @@ Ce mini-projet implémente **uniquement** :
    - Script : `src/main/resources/sql/bizhub_users_reviews_seed.sql`
 
 Les identifiants de test :
-- **Admin**: `admin@bizhub.tn` / `admin123`
-- **Formateur**: `trainer@bizhub.tn` / `admin123`
-- **User**: `user1@bizhub.tn` / `admin123`
-- **Inactive**: `inactive@bizhub.tn` / `admin123` (login refusé)
+- **Admin**: `TestAdmin@bizhub.tn` / `test11`
+- **Formateur**: `TestFormateur@bizhub.tn` / `test11`
+- **Startup**: `TestStartup@bizhub.tn` / `test11`
 
 ## Lancer l’application
 Commande Maven (plugin JavaFX) :
