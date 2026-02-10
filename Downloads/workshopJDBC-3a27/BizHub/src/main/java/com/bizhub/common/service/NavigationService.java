@@ -2,13 +2,17 @@ package com.bizhub.common.service;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
 import javafx.animation.PauseTransition;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -51,7 +55,7 @@ public class NavigationService {
 
     private static final Duration OVERLAY_FADE_IN = Duration.millis(260);
     private static final Duration OVERLAY_FADE_OUT = Duration.millis(360);
-    private static final Duration MIN_OVERLAY_VISIBLE = Duration.millis(420);
+    private static final Duration MIN_OVERLAY_VISIBLE = Duration.seconds(1);
 
     private final Stage stage;
 
@@ -139,6 +143,15 @@ public class NavigationService {
         overlay.setVisible(true);
         overlay.setOpacity(0.0);
         overlay.toFront();
+
+        // Animate the progress bar
+        ProgressBar progressBar = (ProgressBar) overlay.lookup(".loading-bar");
+        if (progressBar != null) {
+            progressBar.setProgress(0.0);
+            Timeline progressTimeline = new Timeline();
+            progressTimeline.getKeyFrames().add(new KeyFrame(Duration.seconds(1), new KeyValue(progressBar.progressProperty(), 1.0)));
+            progressTimeline.play();
+        }
 
         FadeTransition fadeIn = new FadeTransition(OVERLAY_FADE_IN, overlay);
         fadeIn.setFromValue(0.0);

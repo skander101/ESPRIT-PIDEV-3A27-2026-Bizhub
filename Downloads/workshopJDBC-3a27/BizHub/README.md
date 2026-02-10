@@ -31,7 +31,7 @@ Commande Maven (plugin JavaFX) :
 
 ```bash
 cd /home/maindude/Downloads/workshopJDBC-3a27/workshopJDBC-3a27
-mvn javafx:run
+mvn javafx:run~~~~
 ```
 
 > La connexion DB utilise `src/main/java/utils/MyDatabase.java`.

@@ -559,6 +559,14 @@
     -fx-background-radius: 999;
 }
 
+/* Loading bar specific styles for smoother animation */
+.loading-bar {
+    -fx-indeterminate-bar-animation-time: 6;
+    -fx-indeterminate-bar-length: 300;
+    -fx-indeterminate-bar-escape: true;
+    -fx-indeterminate-bar-flip: true;
+}
+
 /* Hyperlinks */
 .hyperlink {
     -fx-text-fill: #E8A93A;

@@ -4,7 +4,6 @@ import com.bizhub.formation.dao.FormationDAO;
 import com.bizhub.common.dao.MyDatabase;
 import com.bizhub.review.dao.ReviewDAO;
 import com.bizhub.user.service.UserService;
-
 import java.sql.Connection;
 
 /**
