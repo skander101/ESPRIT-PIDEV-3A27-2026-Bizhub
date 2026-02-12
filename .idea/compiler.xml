@@ -9,5 +9,8 @@
         <module name="workshopJDBC-3a27" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="gestion_investissement" target="25" />
+    </bytecodeTargetLevel>
   </component>
 </project>
