@@ -7,7 +7,7 @@
 
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.bizhub.user.controller.UserFormController"
+      fx:controller="com.bizhub.controller.user.UserFormController"
       spacing="12" stylesheets="@../css/theme.css" styleClass="card">
 
     <padding>

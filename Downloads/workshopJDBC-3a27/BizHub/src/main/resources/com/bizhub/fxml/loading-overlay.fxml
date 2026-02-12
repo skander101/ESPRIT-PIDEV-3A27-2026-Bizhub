@@ -17,7 +17,7 @@
         </ImageView>
 
         <!-- Indeterminate bar (loading animation) -->
-        <ProgressBar prefWidth="360" progress="0" styleClass="loading-bar" />
+        <ProgressBar prefWidth="360" progress="-1" styleClass="loading-bar" />
     </VBox>
 
 </StackPane>
