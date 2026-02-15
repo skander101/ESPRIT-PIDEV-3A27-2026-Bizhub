@@ -1,4 +1,4 @@
-package com.bizhub.model.services.common.dao;
+package com.bizhub.model.services.common.DB;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -31,4 +31,3 @@ public class MyDatabase {
         return cnx;
     }
 }
-

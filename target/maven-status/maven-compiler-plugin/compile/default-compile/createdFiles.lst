@@ -19,7 +19,7 @@ com/bizhub/controller/users_avis/user/UserProfileController.class
 com/bizhub/controller/users_avis/review/ReviewFormController.class
 com/bizhub/controller/users_avis/review/ReviewManagementController$2.class
 com/bizhub/model/services/user_avis/user/UserService.class
-com/bizhub/model/services/common/dao/MyDatabase.class
+com/bizhub/model/services/common/DB/MyDatabase.class
 com/bizhub/controller/users_avis/user/UserFormController.class
 com/bizhub/controller/users_avis/user/SignupController.class
 com/bizhub/controller/users_avis/formation/FormationFormController$1.class

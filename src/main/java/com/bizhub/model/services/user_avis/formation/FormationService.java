@@ -1,6 +1,6 @@
 package com.bizhub.model.services.user_avis.formation;
 
-import com.bizhub.model.services.common.dao.MyDatabase;
+import com.bizhub.model.services.common.DB.MyDatabase;
 import com.bizhub.model.users_avis.formation.Formation;
 
 import java.math.BigDecimal;

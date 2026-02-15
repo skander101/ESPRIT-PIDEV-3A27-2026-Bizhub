@@ -1,6 +1,6 @@
 package com.bizhub.model.services.user_avis.review;
 
-import com.bizhub.model.services.common.dao.MyDatabase;
+import com.bizhub.model.services.common.DB.MyDatabase;
 import com.bizhub.model.users_avis.review.Review;
 
 import java.sql.*;

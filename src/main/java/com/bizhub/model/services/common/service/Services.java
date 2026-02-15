@@ -1,6 +1,6 @@
 package com.bizhub.model.services.common.service;
 
-import com.bizhub.model.services.common.dao.MyDatabase;
+import com.bizhub.model.services.common.DB.MyDatabase;
 import com.bizhub.model.services.user_avis.formation.FormationService;
 import com.bizhub.model.services.user_avis.review.ReviewService;
 import com.bizhub.model.services.user_avis.user.UserService;
