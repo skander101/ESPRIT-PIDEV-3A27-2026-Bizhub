@@ -8,6 +8,7 @@ import javafx.scene.chart.PieChart;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
@@ -21,7 +22,7 @@ import java.util.ResourceBundle;
 
 public class AdminDashboardController {
 
-    @FXML private Label adminNameLabel;
+    @FXML private HBox topbar;
 
     @FXML private Text totalUsersText;
     @FXML private Text activeUsersText;
@@ -47,20 +48,21 @@ public class AdminDashboardController {
 
     @FXML
     public void initialize() {
+        // Add user profile to topbar
+        if (topbar != null) {
+            topbar.getChildren().add(TopbarProfileHelper.createProfileBox());
+        }
+
         // Highlight Dashboard in the included admin sidebar
         try {
-            if (adminNameLabel != null && adminNameLabel.getScene() != null) {
-                var rootNode = adminNameLabel.getScene().getRoot();
+            if (topbar != null && topbar.getScene() != null) {
+                var rootNode = topbar.getScene().getRoot();
                 var sidebar = rootNode.lookup(".admin-sidebar");
                 NavigationService.setActiveNav(sidebar, NavigationService.ActiveNav.DASHBOARD);
             }
         } catch (Exception ignored) {
         }
 
-        User me = AppSession.getCurrentUser();
-        if (me != null) {
-            adminNameLabel.setText(me.getFullName());
-        }
 
         colLatestName.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(nullToEmpty(c.getValue().getFullName())));
         colLatestEmail.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(nullToEmpty(c.getValue().getEmail())));

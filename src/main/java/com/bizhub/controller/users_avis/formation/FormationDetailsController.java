@@ -13,9 +13,11 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import com.bizhub.controller.users_avis.user.TopbarProfileHelper;
 
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
@@ -37,10 +39,17 @@ public class FormationDetailsController {
     @FXML private TableColumn<Review, String> colComment;
     @FXML private TableColumn<Review, String> colDate;
 
+    @FXML private HBox topbar;
+
     private int formationId;
 
     @FXML
     public void initialize() {
+        // Add user profile to topbar
+        if (topbar != null) {
+            topbar.getChildren().add(TopbarProfileHelper.createProfileBox());
+        }
+
         Integer id = FormationContext.getSelectedFormationId();
         if (id == null) {
             disable("No formation selected");

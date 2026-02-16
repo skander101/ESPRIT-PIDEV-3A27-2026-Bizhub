@@ -6,6 +6,13 @@
   <component name="ChangeListManager">
     <list default="true" id="ad91b0c2-ff33-468c-8b26-6a8c0ea1acbb" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/controller/users_avis/user/AdminSidebarController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/controller/users_avis/user/AdminSidebarController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/controller/users_avis/user/TopbarProfileHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/controller/users_avis/user/TopbarProfileHelper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/controller/users_avis/user/UserSidebarController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/controller/users_avis/user/UserSidebarController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/com/bizhub/css/theme.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/com/bizhub/css/theme.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/com/bizhub/css/user-management.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/com/bizhub/css/user-management.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/admin-sidebar.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/admin-sidebar.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/user-sidebar.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/user-sidebar.fxml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -19,8 +26,8 @@
   </component>
   <component name="CopilotUserSelectedModel">
     <selectedModels>
-      <entry key="chat-panel" value="GPT-5.2" />
-      <entry key="agent-panel" value="GPT-5.2" />
+      <entry key="chat-panel" value="Claude Opus 4.5" />
+      <entry key="agent-panel" value="Claude Opus 4.5" />
     </selectedModels>
   </component>
   <component name="Git.Settings">

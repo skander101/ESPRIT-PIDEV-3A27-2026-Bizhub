@@ -31,6 +31,7 @@ public class UserManagementController {
     private static final int PAGE_SIZE = 20;
 
     @FXML private BorderPane root;
+    @FXML private HBox topbar;
 
     @FXML private TextField searchField;
     @FXML private ComboBox<String> typeFilter;
@@ -47,6 +48,11 @@ public class UserManagementController {
 
     @FXML
     public void initialize() {
+        // Add user profile to topbar
+        if (topbar != null) {
+            topbar.getChildren().add(TopbarProfileHelper.createProfileBox());
+        }
+
         // Ensure correct sidebar for admin vs non-admin
         if (AppSession.isAdmin()) {
             try {

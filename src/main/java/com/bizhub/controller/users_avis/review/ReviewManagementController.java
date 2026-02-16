@@ -17,6 +17,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import com.bizhub.controller.users_avis.user.TopbarProfileHelper;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -39,9 +40,15 @@ public class ReviewManagementController {
     private final ObservableList<Review> backing = FXCollections.observableArrayList();
 
     @FXML private BorderPane root;
+    @FXML private HBox topbar;
 
     @FXML
     public void initialize() {
+        // Add user profile to topbar
+        if (topbar != null) {
+            topbar.getChildren().add(TopbarProfileHelper.createProfileBox());
+        }
+
         if (AppSession.isAdmin()) {
             try {
                 Parent n = FXMLLoader.load(getClass().getResource("/com/bizhub/fxml/admin-sidebar.fxml"));

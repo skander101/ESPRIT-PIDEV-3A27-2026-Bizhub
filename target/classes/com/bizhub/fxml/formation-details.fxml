@@ -11,14 +11,14 @@
             stylesheets="@../css/theme.css">
 
     <top>
-        <HBox spacing="12" alignment="CENTER_LEFT" styleClass="topbar">
+        <HBox fx:id="topbar" spacing="12" alignment="CENTER_LEFT" styleClass="topbar">
             <padding>
                 <Insets top="14" right="16" bottom="14" left="16" />
             </padding>
 
             <Text text="Formation details" styleClass="h1" />
             <Pane HBox.hgrow="ALWAYS" />
-            <Button text="Back" onAction="#goBack" styleClass="btn" />
+            <!-- User profile will be added here programmatically -->
         </HBox>
     </top>
 

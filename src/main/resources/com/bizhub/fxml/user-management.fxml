@@ -19,7 +19,7 @@
     </left>
 
     <top>
-        <HBox spacing="12" alignment="CENTER_LEFT" styleClass="topbar" BorderPane.alignment="CENTER">
+        <HBox fx:id="topbar" spacing="12" alignment="CENTER_LEFT" styleClass="topbar" BorderPane.alignment="CENTER">
             <padding>
                 <Insets top="14" right="16" bottom="14" left="16" />
             </padding>
@@ -36,8 +36,7 @@
             </VBox>
 
             <Pane HBox.hgrow="ALWAYS" />
-
-            <Button text="Back" onAction="#goBack" styleClass="btn" />
+            <!-- User profile will be added here programmatically -->
         </HBox>
     </top>
 

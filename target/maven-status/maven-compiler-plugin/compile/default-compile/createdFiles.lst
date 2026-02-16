@@ -18,6 +18,7 @@ com/bizhub/model/services/common/service/ReportService$DashboardStats.class
 com/bizhub/controller/users_avis/user/UserProfileController.class
 com/bizhub/controller/users_avis/review/ReviewFormController.class
 com/bizhub/controller/users_avis/review/ReviewManagementController$2.class
+com/bizhub/controller/users_avis/user/TopbarProfileHelper.class
 com/bizhub/model/services/user_avis/user/UserService.class
 com/bizhub/model/services/common/DB/MyDatabase.class
 com/bizhub/controller/users_avis/user/UserFormController.class

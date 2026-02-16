@@ -9,6 +9,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -71,11 +72,17 @@ public class UserProfileController {
     @FXML private Label passwordMsgLabel;
 
     @FXML private BorderPane root;
+    @FXML private HBox topbar;
 
     private User me;
 
     @FXML
     public void initialize() {
+        // Add user profile to topbar
+        if (topbar != null) {
+            topbar.getChildren().add(TopbarProfileHelper.createProfileBox());
+        }
+
         if (AppSession.isAdmin()) {
             try {
                 Parent n = FXMLLoader.load(getClass().getResource("/com/bizhub/fxml/admin-sidebar.fxml"));

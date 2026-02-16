@@ -19,7 +19,7 @@
     </left>
 
     <top>
-        <HBox spacing="12" alignment="CENTER_LEFT" styleClass="topbar">
+        <HBox fx:id="topbar" spacing="12" alignment="CENTER_LEFT" styleClass="topbar">
             <padding>
                 <Insets top="14" right="16" bottom="14" left="16" />
             </padding>
@@ -28,6 +28,7 @@
                 <Text text="Manage your account" styleClass="subtitle" />
             </VBox>
             <Pane HBox.hgrow="ALWAYS" />
+            <!-- User profile will be added here programmatically -->
         </HBox>
     </top>
 

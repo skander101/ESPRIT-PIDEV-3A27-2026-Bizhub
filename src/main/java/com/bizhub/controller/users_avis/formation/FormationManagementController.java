@@ -13,10 +13,12 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.geometry.Insets;
+import com.bizhub.controller.users_avis.user.TopbarProfileHelper;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -34,11 +36,17 @@ public class FormationManagementController {
     @FXML private Button deleteButton;
 
     @FXML private BorderPane root;
+    @FXML private HBox topbar;
 
     private final ObservableList<Formation> backing = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
+        // Add user profile to topbar
+        if (topbar != null) {
+            topbar.getChildren().add(TopbarProfileHelper.createProfileBox());
+        }
+
         // Swap sidebar for admins (prevents routing into user mode)
         if (AppSession.isAdmin()) {
             try {

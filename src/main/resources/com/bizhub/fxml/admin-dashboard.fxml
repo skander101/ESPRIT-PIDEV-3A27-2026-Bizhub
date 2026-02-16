@@ -20,13 +20,13 @@
     </left>
 
     <top>
-        <HBox alignment="CENTER_LEFT" spacing="12" styleClass="topbar">
+        <HBox fx:id="topbar" alignment="CENTER_LEFT" spacing="12" styleClass="topbar">
             <padding>
                 <Insets bottom="14" left="16" right="16" top="14" />
             </padding>
             <Text styleClass="h1" text="Admin Dashboard" />
             <Pane HBox.hgrow="ALWAYS" />
-            <Label fx:id="adminNameLabel" styleClass="subtitle" text="Admin" />
+            <!-- User profile will be added here programmatically -->
         </HBox>
     </top>
 
