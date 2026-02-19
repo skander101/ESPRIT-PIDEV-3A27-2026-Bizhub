@@ -442,4 +442,34 @@
     -fx-background-color: #FFB84D;
 }
 
+/* Danger button style */
+.btn-danger {
+    -fx-background-color: rgba(220, 38, 38, 0.25);
+    -fx-text-fill: #EF4444;
+    -fx-font-weight: bold;
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-border-color: rgba(220, 38, 38, 0.55);
+    -fx-border-width: 1.5;
+    -fx-padding: 16 22;
+    -fx-font-size: 16px;
+    -fx-cursor: hand;
+}
+
+.btn-danger:hover {
+    -fx-background-color: rgba(220, 38, 38, 0.45);
+    -fx-border-color: #EF4444;
+}
+
+/* User card selected state with golden shadow */
+.user-card-selected {
+    -fx-background-color: #1A3352;
+    -fx-background-radius: 20px;
+    -fx-border-radius: 20px;
+    -fx-border-color: #FFD54F;
+    -fx-border-width: 2px;
+    -fx-padding: 22px;
+    -fx-effect: dropshadow(gaussian, rgba(255, 213, 79, 0.65), 24, 0.45, 0, 0);
+}
+
 

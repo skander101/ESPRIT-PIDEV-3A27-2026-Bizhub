@@ -404,10 +404,15 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.22), 20, 0.16, 0, 10);
 }
 
-.review-card:hover,
-.review-card-selected {
+.review-card:hover {
     -fx-border-color: #FFB84D;
     -fx-effect: dropshadow(gaussian, rgba(255, 184, 77, 0.25), 24, 0.20, 0, 12);
+}
+
+.review-card-selected {
+    -fx-border-color: #FFD54F;
+    -fx-border-width: 2px;
+    -fx-effect: dropshadow(gaussian, rgba(255, 213, 79, 0.65), 24, 0.45, 0, 0);
 }
 
 .review-avatar {

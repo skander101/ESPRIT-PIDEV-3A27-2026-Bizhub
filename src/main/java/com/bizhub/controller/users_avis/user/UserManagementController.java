@@ -18,8 +18,10 @@ import java.io.FileWriter;
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.image.Image;
@@ -46,6 +48,9 @@ public class UserManagementController {
     private List<User> filtered = new ArrayList<>();
     private int pageIndex = 0;
 
+    // Track selected users for multiple selection
+    private final Set<Integer> selectedUserIds = new HashSet<>();
+
     @FXML
     public void initialize() {
         // Add user profile to topbar
@@ -69,7 +74,22 @@ public class UserManagementController {
             }
         }
 
-        usersList.setCellFactory(lv -> new UserCardCell());
+        usersList.setCellFactory(lv -> {
+            UserCardCell cell = new UserCardCell(selectedUserIds);
+            cell.setOnMouseClicked(event -> {
+                User user = cell.getItem();
+                if (user != null) {
+                    int userId = user.getUserId();
+                    if (selectedUserIds.contains(userId)) {
+                        selectedUserIds.remove(userId);
+                    } else {
+                        selectedUserIds.add(userId);
+                    }
+                    usersList.refresh();
+                }
+            });
+            return cell;
+        });
 
         typeFilter.setItems(FXCollections.observableArrayList("ALL", "startup", "fournisseur", "formateur", "investisseur", "admin"));
         typeFilter.getSelectionModel().select("ALL");
@@ -126,6 +146,65 @@ public class UserManagementController {
             loadAll();
         } catch (SQLException e) {
             showError(e.getMessage());
+        }
+    }
+
+    @FXML
+    public void deleteSelected() {
+        if (!AppSession.isAdmin()) {
+            info("Admin only");
+            return;
+        }
+
+        if (selectedUserIds.isEmpty()) {
+            info("Select at least one user first");
+            return;
+        }
+
+        // Get selected users
+        List<User> selectedUsers = new ArrayList<>();
+        for (User u : backingList) {
+            if (selectedUserIds.contains(u.getUserId())) {
+                selectedUsers.add(u);
+            }
+        }
+
+        if (selectedUsers.isEmpty()) {
+            info("No valid users selected");
+            return;
+        }
+
+        // Build confirmation message
+        StringBuilder message = new StringBuilder("Delete " + selectedUsers.size() + " user(s)?\n\n");
+        for (User u : selectedUsers) {
+            message.append("• ").append(u.getFullName()).append(" (").append(u.getEmail()).append(")\n");
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirm Deletion");
+        confirm.setHeaderText("Delete selected users?");
+        confirm.setContentText(message.toString());
+        AlertHelper.styleAlert(confirm);
+        if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
+
+        int deleted = 0;
+        int failed = 0;
+        for (User u : selectedUsers) {
+            try {
+                Services.users().delete(u.getUserId());
+                deleted++;
+            } catch (SQLException e) {
+                failed++;
+            }
+        }
+
+        selectedUserIds.clear();
+        loadAll();
+
+        if (failed > 0) {
+            info("Deleted " + deleted + " user(s), " + failed + " failed");
+        } else {
+            info("Deleted " + deleted + " user(s)");
         }
     }
 
@@ -273,7 +352,10 @@ public class UserManagementController {
         private final Region spacer = new Region();
         private final Label status = new Label();
 
-        UserCardCell() {
+        private final Set<Integer> selectedUserIds;
+
+        UserCardCell(Set<Integer> selectedUserIds) {
+            this.selectedUserIds = selectedUserIds;
             card.getStyleClass().add("user-card");
             card.setPadding(new Insets(16));
 
@@ -328,6 +410,15 @@ public class UserManagementController {
             );
 
             setAvatar(item.getAvatarUrl(), fullName);
+
+            // Apply golden shadow for selected users
+            boolean isSelected = selectedUserIds.contains(item.getUserId());
+            card.getStyleClass().removeAll("user-card", "user-card-selected");
+            if (isSelected) {
+                card.getStyleClass().add("user-card-selected");
+            } else {
+                card.getStyleClass().add("user-card");
+            }
 
             setGraphic(card);
         }

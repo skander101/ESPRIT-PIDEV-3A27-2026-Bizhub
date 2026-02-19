@@ -61,6 +61,7 @@
                 <Button text="Add" onAction="#addUser" styleClass="btn-primary" />
                 <Button text="Edit" onAction="#editSelected" styleClass="btn" />
                 <Button text="Toggle Active" onAction="#toggleActiveSelected" styleClass="btn" />
+                <Button fx:id="deleteBtn" text="Delete Selected" onAction="#deleteSelected" styleClass="btn-danger" />
                 <Pane HBox.hgrow="ALWAYS" />
 
                 <HBox spacing="8" alignment="CENTER_RIGHT">

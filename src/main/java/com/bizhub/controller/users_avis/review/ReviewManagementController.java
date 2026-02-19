@@ -23,8 +23,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class ReviewManagementController {
 
@@ -38,6 +41,9 @@ public class ReviewManagementController {
     @FXML private Button deleteButton;
 
     private final ObservableList<Review> backing = FXCollections.observableArrayList();
+
+    // Track selected reviews for multiple selection
+    private final Set<Integer> selectedReviewIds = new HashSet<>();
 
     @FXML private BorderPane root;
     @FXML private HBox topbar;
@@ -68,7 +74,22 @@ public class ReviewManagementController {
         }
 
         reviewsList.setItems(backing);
-        reviewsList.setCellFactory(lv -> new ReviewCardCell());
+        reviewsList.setCellFactory(lv -> {
+            ReviewCardCell cell = new ReviewCardCell(selectedReviewIds);
+            cell.setOnMouseClicked(event -> {
+                Review review = cell.getItem();
+                if (review != null) {
+                    int reviewId = review.getAvisId();
+                    if (selectedReviewIds.contains(reviewId)) {
+                        selectedReviewIds.remove(reviewId);
+                    } else {
+                        selectedReviewIds.add(reviewId);
+                    }
+                    reviewsList.refresh();
+                }
+            });
+            return cell;
+        });
 
         ratingFilter.setItems(FXCollections.observableArrayList("ALL", "1", "2", "3", "4", "5"));
         ratingFilter.getSelectionModel().select("ALL");
@@ -206,24 +227,55 @@ public class ReviewManagementController {
             return;
         }
 
-        Review r = reviewsList.getSelectionModel().getSelectedItem();
-        if (r == null) {
-            info("Select a review first");
+        if (selectedReviewIds.isEmpty()) {
+            info("Select at least one review first");
             return;
         }
 
+        // Get selected reviews
+        List<Review> selectedReviews = new ArrayList<>();
+        for (Review r : backing) {
+            if (selectedReviewIds.contains(r.getAvisId())) {
+                selectedReviews.add(r);
+            }
+        }
+
+        if (selectedReviews.isEmpty()) {
+            info("No valid reviews selected");
+            return;
+        }
+
+        // Build confirmation message
+        StringBuilder message = new StringBuilder("Delete " + selectedReviews.size() + " review(s)?\n\n");
+        for (Review r : selectedReviews) {
+            message.append("• ").append(r.getReviewerName()).append(" → ").append(r.getFormationTitle()).append("\n");
+        }
+
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirm deletion");
-        confirm.setHeaderText("Delete selected review?");
-        confirm.setContentText("This cannot be undone.");
+        confirm.setTitle("Confirm Deletion");
+        confirm.setHeaderText("Delete selected reviews?");
+        confirm.setContentText(message.toString());
         AlertHelper.styleAlert(confirm);
         if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
 
-        try {
-            Services.reviews().delete(r.getAvisId());
-            reload();
-        } catch (SQLException e) {
-            showError(e.getMessage());
+        int deleted = 0;
+        int failed = 0;
+        for (Review r : selectedReviews) {
+            try {
+                Services.reviews().delete(r.getAvisId());
+                deleted++;
+            } catch (SQLException e) {
+                failed++;
+            }
+        }
+
+        selectedReviewIds.clear();
+        reload();
+
+        if (failed > 0) {
+            info("Deleted " + deleted + " review(s), " + failed + " failed");
+        } else {
+            info("Deleted " + deleted + " review(s)");
         }
     }
 
@@ -276,20 +328,15 @@ public class ReviewManagementController {
         private final Label formationLabel = new Label();
         private final Label reviewText = new Label();
 
-        ReviewCardCell() {
+        private final Set<Integer> selectedReviewIds;
+
+        ReviewCardCell(Set<Integer> selectedReviewIds) {
+            this.selectedReviewIds = selectedReviewIds;
             getStyleClass().add("review-cell");
 
             card.getStyleClass().addAll("review-card");
             card.setPadding(new Insets(16));
 
-            // Toggle selected style on the card when cell is selected
-            selectedProperty().addListener((obs, wasSelected, isSelected) -> {
-                if (isSelected) {
-                    card.getStyleClass().add("review-card-selected");
-                } else {
-                    card.getStyleClass().remove("review-card-selected");
-                }
-            });
 
             avatar.getStyleClass().add("review-avatar");
             avatar.setMinSize(44, 44);
@@ -361,6 +408,15 @@ public class ReviewManagementController {
 
             String txt = nullToEmpty(item.getComment()).trim();
             reviewText.setText(txt.isBlank() ? "No comment provided." : txt);
+
+            // Apply golden shadow for selected reviews
+            boolean isSelected = selectedReviewIds.contains(item.getAvisId());
+            card.getStyleClass().removeAll("review-card", "review-card-selected");
+            if (isSelected) {
+                card.getStyleClass().add("review-card-selected");
+            } else {
+                card.getStyleClass().add("review-card");
+            }
 
             setGraphic(card);
         }
