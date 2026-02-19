@@ -16,7 +16,7 @@
                 <Insets top="14" right="16" bottom="14" left="16" />
             </padding>
 
-            <Button text="← Back" onAction="#goBack" styleClass="btn-secondary" />
+            <Button text="← Back" onAction="#goBack" styleClass="btn-primary" />
             <Text text="Formation details" styleClass="h1" />
             <Pane HBox.hgrow="ALWAYS" />
             <!-- User profile will be added here programmatically -->
@@ -61,14 +61,7 @@
 
             <VBox styleClass="card" spacing="10" VBox.vgrow="ALWAYS">
                 <Text text="Reviews" styleClass="h2" />
-                <TableView fx:id="reviewsTable" VBox.vgrow="ALWAYS" styleClass="reviews-table">
-                    <columns>
-                        <TableColumn fx:id="colReviewer" text="Reviewer" prefWidth="240" />
-                        <TableColumn fx:id="colRating" text="Rating" prefWidth="90" />
-                        <TableColumn fx:id="colComment" text="Comment" prefWidth="520" />
-                        <TableColumn fx:id="colDate" text="Date" prefWidth="160" />
-                    </columns>
-                </TableView>
+                <ListView fx:id="reviewsList" VBox.vgrow="ALWAYS" styleClass="cards-list" />
             </VBox>
 
         </VBox>
