@@ -42,6 +42,7 @@ com/bizhub/controller/users_avis/formation/FormationManagementController.class
 com/bizhub/model/services/user_avis/formation/FormationService.class
 com/bizhub/model/users_avis/formation/Formation.class
 com/bizhub/controller/users_avis/review/ReviewManagementController$ReviewCardCell.class
+com/bizhub/model/services/common/service/CloudflareAiService.class
 com/bizhub/controller/users_avis/user/AdminSidebarController.class
 com/bizhub/controller/users_avis/formation/FormationFormController.class
 com/bizhub/controller/users_avis/user/VerificationController.class

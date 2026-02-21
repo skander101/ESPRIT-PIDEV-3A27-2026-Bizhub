@@ -5,14 +5,25 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ad91b0c2-ff33-468c-8b26-6a8c0ea1acbb" name="Changes" comment="Added 2 APIs: Mail Verification and 2FA with Authenticator App">
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/model/services/common/service/CloudflareAiService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/controller/users_avis/user/UserManagementController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/controller/users_avis/user/UserManagementController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/com/bizhub/css/user-management.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/com/bizhub/css/user-management.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/user-management.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/user-management.fxml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/controller/users_avis/user/UserManagementController$UserCardCell.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/controller/users_avis/user/UserManagementController$UserCardCell.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/controller/users_avis/user/UserManagementController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/controller/users_avis/user/UserManagementController.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/css/user-management.css" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/css/user-management.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/fxml/user-management.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/fxml/user-management.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/controller/users_avis/formation/FormationFormController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/controller/users_avis/formation/FormationFormController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/controller/users_avis/user/AdminDashboardController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/controller/users_avis/user/AdminDashboardController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/controller/users_avis/user/UserProfileController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/controller/users_avis/user/UserProfileController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/model/services/common/service/EnvConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/model/services/common/service/EnvConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/model/services/common/service/Services.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/model/services/common/service/Services.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/admin-dashboard.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/admin-dashboard.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/formation-form.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/formation-form.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/user-profile.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/user-profile.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/controller/users_avis/user/AdminDashboardController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/controller/users_avis/user/AdminDashboardController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/controller/users_avis/user/UserProfileController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/controller/users_avis/user/UserProfileController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/fxml/admin-dashboard.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/fxml/admin-dashboard.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/fxml/formation-form.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/fxml/formation-form.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/fxml/user-profile.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/fxml/user-profile.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/model/services/common/service/Services.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/model/services/common/service/Services.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -26,8 +37,8 @@
   </component>
   <component name="CopilotUserSelectedModel">
     <selectedModels>
-      <entry key="chat-panel" value="Claude Opus 4.5" />
-      <entry key="agent-panel" value="Claude Opus 4.5" />
+      <entry key="chat-panel" value="GPT-5.2" />
+      <entry key="agent-panel" value="GPT-5.2" />
     </selectedModels>
   </component>
   <component name="Git.Settings">
@@ -85,7 +96,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.30387.90" />
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.31033.145" />
       </set>
     </attachedChunks>
   </component>

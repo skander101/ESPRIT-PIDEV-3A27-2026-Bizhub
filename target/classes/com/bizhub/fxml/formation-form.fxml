@@ -46,7 +46,7 @@
 
     <HBox spacing="10" alignment="CENTER_RIGHT">
         <Button text="Cancel" onAction="#cancel" styleClass="btn" />
-        <Button fx:id="saveButton" text="Save" onAction="#save" styleClass="btn-primary" />
+        <Button fx:id="saveButton" text="Generate Image (Free)" onAction="#generateImage" styleClass="btn-primary" />
     </HBox>
 
 </VBox>

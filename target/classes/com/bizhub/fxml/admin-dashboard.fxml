@@ -26,7 +26,6 @@
             </padding>
             <Text styleClass="h1" text="Admin Dashboard" />
             <Pane HBox.hgrow="ALWAYS" />
-            <!-- User profile will be added here programmatically -->
         </HBox>
     </top>
 

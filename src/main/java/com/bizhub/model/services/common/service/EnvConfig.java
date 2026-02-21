@@ -1,26 +1,81 @@
 package com.bizhub.model.services.common.service;
 
-import io.github.cdimascio.dotenv.Dotenv;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * EnvConfig: Loads environment variables from .env file.
- * Uses dotenv-java library to load variables from the project root.
+ * EnvConfig: Loads environment variables from a .env file in the project root.
+ *
+ * Format: simple KEY=VALUE pairs. Lines starting with '#' are comments.
+ * Values may be optionally quoted with single or double quotes.
+ *
+ * No external library is used.
  */
 public final class EnvConfig {
 
-    private static Dotenv dotenv;
+    private static volatile Map<String, String> env;
 
     private EnvConfig() {
     }
 
-    private static synchronized Dotenv getInstance() {
-        if (dotenv == null) {
-            dotenv = Dotenv.configure()
-                    .directory(".")
-                    .ignoreIfMissing()
-                    .load();
+    private static Map<String, String> loadEnvFile() {
+        Path envPath = Paths.get(".env");
+        if (!Files.exists(envPath)) {
+            System.err.println("[EnvConfig] .env file not found at project root (" + envPath.toAbsolutePath() + "). " +
+                    "Falling back to system environment variables.");
+            return Collections.emptyMap();
         }
-        return dotenv;
+
+        Map<String, String> map = new HashMap<>();
+        try (BufferedReader br = Files.newBufferedReader(envPath, StandardCharsets.UTF_8)) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String trimmed = line.trim();
+                if (trimmed.isEmpty() || trimmed.startsWith("#")) continue;
+
+                int idx = trimmed.indexOf('=');
+                if (idx <= 0) continue;
+
+                String key = trimmed.substring(0, idx).trim();
+                String value = trimmed.substring(idx + 1).trim();
+
+                // Support optional export keyword: export KEY=VALUE
+                if (key.startsWith("export ")) {
+                    key = key.substring("export ".length()).trim();
+                }
+
+                // Strip optional quotes
+                if ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'"))) {
+                    if (value.length() >= 2) value = value.substring(1, value.length() - 1);
+                }
+
+                map.put(key, value);
+            }
+        } catch (IOException e) {
+            System.err.println("[EnvConfig] Failed to read .env file: " + e.getMessage());
+            return Collections.emptyMap();
+        }
+
+        return map;
+    }
+
+    private static Map<String, String> getEnv() {
+        if (env == null) {
+            synchronized (EnvConfig.class) {
+                if (env == null) {
+                    env = loadEnvFile();
+                }
+            }
+        }
+        return env;
     }
 
     /**
@@ -28,9 +83,12 @@ public final class EnvConfig {
      * First checks .env file, then falls back to system environment variables.
      */
     public static String get(String key) {
-        String value = getInstance().get(key);
+        String value = getEnv().get(key);
         if (value == null || value.isBlank()) {
             value = System.getenv(key);
+        }
+        if (value == null || value.isBlank()) {
+            System.err.println("[EnvConfig] Missing key: " + key + " (not found in .env nor system env)");
         }
         return value;
     }
@@ -64,5 +122,13 @@ public final class EnvConfig {
     public static String getInfobipBaseUrl() {
         return get("INFOBIP_BASE_URL");
     }
-}
 
+    // Cloudflare Workers AI
+    public static String getCloudflareApiToken() {
+        return get("CLOUDFLARE_API_TOKEN");
+    }
+
+    public static String getCloudflareAccountId() {
+        return get("CLOUDFLARE_ACC_ID");
+    }
+}

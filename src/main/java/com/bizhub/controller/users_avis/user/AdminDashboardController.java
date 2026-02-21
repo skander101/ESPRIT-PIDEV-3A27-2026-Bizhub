@@ -9,7 +9,6 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
@@ -42,9 +41,6 @@ public class AdminDashboardController {
 
     @FXML
     private Label titleLabel;
-
-    @FXML
-    private StackPane contentArea;
 
     @FXML
     public void initialize() {

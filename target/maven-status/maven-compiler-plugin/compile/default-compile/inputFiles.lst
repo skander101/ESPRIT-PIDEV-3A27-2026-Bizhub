@@ -17,6 +17,7 @@
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/controller/users_avis/user/UserSidebarController.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/controller/users_avis/review/ReviewManagementController.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/controller/users_avis/user/SignupController.java
+/home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/common/service/CloudflareAiService.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/controller/users_avis/user/UserManagementController.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/users_avis/formation/Formation.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/controller/users_avis/user/AdminDashboardController.java

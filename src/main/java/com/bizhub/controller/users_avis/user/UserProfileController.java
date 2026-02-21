@@ -2,6 +2,7 @@ package com.bizhub.controller.users_avis.user;
 
 import com.bizhub.model.users_avis.user.User;
 import com.bizhub.model.services.common.service.*;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -13,9 +14,12 @@ import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.SQLException;
 
 public class UserProfileController {
@@ -74,6 +78,9 @@ public class UserProfileController {
     @FXML private BorderPane root;
     @FXML private HBox topbar;
 
+    @FXML private Button generateAiBtn;
+    @FXML private ProgressIndicator aiProgress;
+
     private User me;
 
     @FXML
@@ -111,6 +118,21 @@ public class UserProfileController {
         applyRoleVisibility(me.getUserType());
         loadFieldsFromUser(me);
         reloadAvatar();
+
+        // If Cloudflare creds aren't configured, keep the feature optional by disabling the button.
+        if (generateAiBtn != null) {
+            boolean configured = isCloudflareConfigured();
+            generateAiBtn.setDisable(!configured);
+            if (!configured) {
+                generateAiBtn.setTooltip(new Tooltip("AI generation not configured. Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACC_ID to .env"));
+            }
+        }
+    }
+
+    private boolean isCloudflareConfigured() {
+        String token = EnvConfig.getCloudflareApiToken();
+        String acc = EnvConfig.getCloudflareAccountId();
+        return token != null && !token.isBlank() && acc != null && !acc.isBlank();
     }
 
     private void applyRoleVisibility(String userType) {
@@ -237,6 +259,77 @@ public class UserProfileController {
             info("Profile picture updated");
         } catch (Exception e) {
             showError("Failed to update profile picture: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    public void generateAiPicture() {
+        if (me == null) return;
+
+        if (!isCloudflareConfigured()) {
+            showError("Cloudflare AI is not configured. Please set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACC_ID in .env.");
+            return;
+        }
+
+        TextInputDialog dialog = new TextInputDialog("Professional headshot portrait, friendly, business profile photo, neutral background");
+        dialog.setTitle("Generate profile picture");
+        dialog.setHeaderText("Describe the profile picture you want");
+        dialog.setContentText("Prompt:");
+
+        dialog.showAndWait().ifPresent(prompt -> {
+            if (prompt == null || prompt.isBlank()) return;
+
+            setAiLoading(true);
+
+            Task<byte[]> task = new Task<>() {
+                @Override
+                protected byte[] call() throws Exception {
+                    return Services.cloudflareAi().generateFormationImage(prompt.trim());
+                }
+            };
+
+            task.setOnSucceeded(evt -> {
+                byte[] bytes = task.getValue();
+                try {
+                    // Show it immediately in the same ImageView.
+                    avatarView.setImage(new Image(new ByteArrayInputStream(bytes)));
+
+                    // Persist using the existing file-based flow (no DB schema change).
+                    Path tmp = Files.createTempFile("bizhub-ai-avatar-", ".png");
+                    Files.write(tmp, bytes);
+                    File tmpFile = tmp.toFile();
+                    tmpFile.deleteOnExit();
+
+                    String newAvatarPath = Services.users().updateProfilePicture(me.getUserId(), tmpFile);
+                    me.setAvatarUrl(newAvatarPath);
+                    AppSession.setCurrentUser(me);
+                    reloadAvatar();
+
+                    info("AI profile picture generated");
+                } catch (Exception e) {
+                    showError("Failed to apply generated picture: " + e.getMessage());
+                } finally {
+                    setAiLoading(false);
+                }
+            });
+
+            task.setOnFailed(evt -> {
+                Throwable ex = task.getException();
+                showError("Failed to generate image: " + (ex == null ? "Unknown error" : ex.getMessage()));
+                setAiLoading(false);
+            });
+
+            Thread th = new Thread(task, "cf-ai-avatar-gen");
+            th.setDaemon(true);
+            th.start();
+        });
+    }
+
+    private void setAiLoading(boolean loading) {
+        if (generateAiBtn != null) generateAiBtn.setDisable(loading);
+        if (aiProgress != null) {
+            aiProgress.setVisible(loading);
+            aiProgress.setManaged(loading);
         }
     }
 

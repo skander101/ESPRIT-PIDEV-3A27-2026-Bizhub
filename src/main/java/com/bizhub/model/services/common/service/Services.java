@@ -23,6 +23,7 @@ public final class Services {
     private static Auth0Service auth0Service;
     private static InfobipService infobipService;
     private static TotpService totpService;
+    private static CloudflareAiService cloudflareAiService;
 
     private Services() {
     }
@@ -95,5 +96,12 @@ public final class Services {
             totpService = new TotpService();
         }
         return totpService;
+    }
+
+    public static synchronized CloudflareAiService cloudflareAi() {
+        if (cloudflareAiService == null) {
+            cloudflareAiService = new CloudflareAiService();
+        }
+        return cloudflareAiService;
     }
 }
