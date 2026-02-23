@@ -1,60 +1,114 @@
 package com.bizhub.model.services.marketplace.payment;
 
-import com.bizhub.model.marketplace.CommandeJoinProduit;
+import com.stripe.Stripe;
+import com.stripe.exception.StripeException;
+import com.stripe.model.checkout.Session;
+import com.stripe.param.checkout.SessionCreateParams;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class StripeGatewayClient implements PaymentProvider {
+/**
+ * StripeGatewayClient — appelle l'API Stripe directement (pas de serveur local).
+ *
+ * Lit la config depuis src/main/resources/stripe.properties
+ * Instancié par PaymentService.
+ */
+public class StripeGatewayClient {
 
-    // URL de TON backend (local au début)
-    private final String gatewayBaseUrl;
-    private final HttpClient http = HttpClient.newHttpClient();
+    private static final Logger LOGGER = Logger.getLogger(StripeGatewayClient.class.getName());
 
-    public StripeGatewayClient(String gatewayBaseUrl) {
-        this.gatewayBaseUrl = gatewayBaseUrl;
-    }
+    private final String secretKey;
+    private final String currency;
+    private final String successUrl;
+    private final String cancelUrl;
 
-    @Override
-    public PaymentResult createCheckout(CommandeJoinProduit c) throws Exception {
-        // JSON simple (sans libs)
-        String body = "{"
-                + "\"orderId\":" + c.getIdCommande() + ","
-                + "\"product\":\"" + safe(c.getProduitNom()) + "\","
-                + "\"quantity\":" + c.getQuantiteCommande()
-                + "}";
-
-        HttpRequest req = HttpRequest.newBuilder()
-                .uri(URI.create(gatewayBaseUrl + "/api/payments/stripe/checkout"))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(body))
-                .build();
-
-        HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
-        if (resp.statusCode() >= 400) {
-            throw new RuntimeException("Gateway error: " + resp.statusCode() + " | " + resp.body());
+    public StripeGatewayClient() {
+        Properties props = new Properties();
+        try (InputStream in = getClass().getClassLoader()
+                .getResourceAsStream("stripe.properties")) {
+            if (in == null)
+                throw new IllegalStateException(
+                        "stripe.properties introuvable dans src/main/resources/");
+            props.load(in);
+        } catch (IOException e) {
+            throw new IllegalStateException(
+                    "Impossible de lire stripe.properties : " + e.getMessage(), e);
         }
 
-        // Réponse attendue: {"ref":"cs_test_...","url":"https://checkout.stripe.com/...","status":"created"}
-        String json = resp.body();
-        String ref = pick(json, "ref");
-        String url = pick(json, "url");
-        String status = pick(json, "status");
+        this.secretKey  = props.getProperty("stripe.secret.key", "").trim();
+        this.currency   = props.getProperty("stripe.currency", "eur").trim();
+        this.successUrl = props.getProperty("stripe.success.url",
+                "https://bizhub.app/succes").trim();
+        this.cancelUrl  = props.getProperty("stripe.cancel.url",
+                "https://bizhub.app/annule").trim();
 
-        return new PaymentResult(ref, url, status);
+        if (secretKey.isEmpty())
+            throw new IllegalStateException(
+                    "stripe.secret.key vide dans stripe.properties");
     }
 
-    private static String safe(String s) { return s == null ? "" : s.replace("\"", "'"); }
+    /**
+     * Crée une Stripe Checkout Session.
+     *
+     * @param orderId     ID de la commande
+     * @param productName Nom du produit (affiché sur la page Stripe)
+     * @param quantity    Quantité commandée
+     * @return PaymentResult avec l'URL Checkout ou le message d'erreur
+     */
+    public PaymentResult createStripeCheckout(int orderId,
+                                              String productName,
+                                              int quantity) {
+        try {
+            Stripe.apiKey = secretKey;
 
-    // petit parseur JSON naïf (ok pour demo)
-    private static String pick(String json, String key) {
-        String k = "\"" + key + "\":";
-        int i = json.indexOf(k);
-        if (i < 0) return "";
-        int start = json.indexOf('"', i + k.length()) + 1;
-        int end = json.indexOf('"', start);
-        return (start > 0 && end > start) ? json.substring(start, end) : "";
+            // 10.00 EUR par unité en test
+            // TODO : passer le vrai prix depuis CommandeJoinProduit.getPrix()
+            long unitCentimes = 1000L;
+
+            SessionCreateParams params = SessionCreateParams.builder()
+                    .setMode(SessionCreateParams.Mode.PAYMENT)
+                    .setSuccessUrl(successUrl + "?session_id={CHECKOUT_SESSION_ID}")
+                    .setCancelUrl(cancelUrl)
+                    .addLineItem(
+                            SessionCreateParams.LineItem.builder()
+                                    .setQuantity((long) quantity)
+                                    .setPriceData(
+                                            SessionCreateParams.LineItem.PriceData.builder()
+                                                    .setCurrency(currency)
+                                                    .setUnitAmount(unitCentimes)
+                                                    .setProductData(
+                                                            SessionCreateParams.LineItem.PriceData
+                                                                    .ProductData.builder()
+                                                                    .setName(safe(productName).isEmpty()
+                                                                            ? "Commande #" + orderId
+                                                                            : safe(productName))
+                                                                    .setDescription(
+                                                                            "BizHub — Commande #" + orderId)
+                                                                    .build()
+                                                    )
+                                                    .build()
+                                    )
+                                    .build()
+                    )
+                    .build();
+
+            Session session = Session.create(params);
+
+            LOGGER.info("Stripe session créée : " + session.getId());
+            return PaymentResult.ok(session.getId(), session.getUrl());
+
+        } catch (StripeException e) {
+            LOGGER.log(Level.SEVERE, "Erreur Stripe API", e);
+            return PaymentResult.fail("Stripe : " + e.getUserMessage());
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Erreur StripeGatewayClient", e);
+            return PaymentResult.fail("Erreur : " + e.getMessage());
+        }
     }
+
+    private static String safe(String s) { return s == null ? "" : s.trim(); }
 }

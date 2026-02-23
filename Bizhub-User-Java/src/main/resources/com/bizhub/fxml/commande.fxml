@@ -11,17 +11,19 @@
         xmlns:fx="http://javafx.com/fxml/1"
         fx:controller="com.bizhub.controller.marketplace.CommandeController">
 
-    <!-- ═══════════════ LEFT : Sidebar ═══════════════ -->
+    <!-- LEFT : Sidebar -->
     <left>
         <fx:include source="user-sidebar.fxml"/>
     </left>
 
-    <!-- ═══════════════ TOP : Titre + Filtres + KPIs ═══════════════ -->
+    <!-- TOP : Title + Filters + KPI -->
     <top>
         <VBox spacing="12" styleClass="topbar">
-            <padding><Insets top="14" right="16" bottom="14" left="16"/></padding>
+            <padding>
+                <Insets top="14" right="16" bottom="14" left="16"/>
+            </padding>
 
-            <!-- Titre + filtres -->
+            <!-- Ligne 1 : Titre + Filtres -->
             <HBox alignment="CENTER_LEFT" spacing="12">
                 <Text text="Commandes" styleClass="h1"/>
                 <Pane HBox.hgrow="ALWAYS"/>
@@ -63,85 +65,120 @@
         </VBox>
     </top>
 
-    <!-- ═══════════════ CENTER : Form (gauche) + Table (droite) ═══════════════ -->
+    <!-- CENTER : Form (left) + Table (right) -->
     <center>
         <HBox spacing="16">
-            <padding><Insets top="14" right="16" bottom="16" left="16"/></padding>
+            <padding>
+                <Insets top="14" right="16" bottom="16" left="16"/>
+            </padding>
 
-            <!-- ─── CARTE GAUCHE : form role-based ─── -->
+            <!-- LEFT CARD : role-based form -->
             <VBox fx:id="cardForm" spacing="14" styleClass="card" prefWidth="380" minWidth="340">
-
                 <Text fx:id="titleForm" text="Passer une commande" styleClass="h2"/>
 
-                <!-- ══════════════════════════════════
-                     STARTUP : Passer / supprimer commande
-                     visible=true par défaut, masqué en runtime si investisseur
-                ══════════════════════════════════ -->
+                <!-- STARTUP : Ajouter / Supprimer + Paiement -->
                 <VBox fx:id="boxAdd" spacing="8">
 
-                    <!-- Produit -->
                     <Label text="Produit / Service" styleClass="form-label"/>
                     <ComboBox fx:id="cbProduit" promptText="Choisir un produit..." maxWidth="1e9"/>
                     <HBox fx:id="hboxValProduit" spacing="5" alignment="CENTER_LEFT"
                           visible="false" managed="false">
                         <Label fx:id="iconValProduit" text=""/>
-                        <Label fx:id="lblValProduit"  text="" wrapText="true"/>
+                        <Label fx:id="lblValProduit" text="" wrapText="true"/>
                     </HBox>
 
-                    <!-- Quantité -->
                     <Label text="Quantité" styleClass="form-label"/>
                     <TextField fx:id="tfQuantite" promptText="Nombre entier > 0"/>
                     <HBox fx:id="hboxValQte" spacing="5" alignment="CENTER_LEFT"
                           visible="false" managed="false">
                         <Label fx:id="iconValQte" text=""/>
-                        <Label fx:id="lblValQte"  text="" wrapText="true"/>
+                        <Label fx:id="lblValQte" text="" wrapText="true"/>
                     </HBox>
 
-                    <!-- Bouton Ajouter -->
                     <Button fx:id="btnAjouter"
                             text="✚  Ajouter la commande"
                             onAction="#onAjouter"
                             maxWidth="1e9"
                             styleClass="btn-primary"/>
 
-                    <!-- Message retour ajout -->
                     <HBox fx:id="hboxMsgAdd" spacing="5" alignment="CENTER_LEFT"
                           visible="false" managed="false">
                         <Label fx:id="iconMsgAdd" text=""/>
-                        <Label fx:id="lblMsgAdd"  text="" wrapText="true"/>
+                        <Label fx:id="lblMsgAdd" text="" wrapText="true"/>
                     </HBox>
 
                     <Separator opacity="0.4"/>
 
-                    <!-- Suppression -->
+                    <!-- PAIEMENT : visible si commande confirmée sélectionnée -->
+                    <VBox fx:id="boxPaiement" spacing="8" visible="false" managed="false"
+                          style="-fx-background-color:rgba(16,185,129,0.08);
+                                 -fx-background-radius:14;
+                                 -fx-border-color:rgba(16,185,129,0.35);
+                                 -fx-border-radius:14;
+                                 -fx-border-width:1;
+                                 -fx-padding:12;">
+
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Label text="✔"
+                                   style="-fx-text-fill:#10B981;-fx-font-weight:900;-fx-font-size:14;"/>
+                            <Label fx:id="lblInfoPaiement" text=""
+                                   style="-fx-text-fill:#10B981;-fx-font-weight:700;-fx-font-size:12;"
+                                   wrapText="true"/>
+                        </HBox>
+
+                        <Button fx:id="btnPayer"
+                                text="💳  Payer cette commande"
+                                onAction="#onPayerCommande"
+                                maxWidth="1e9"
+                                style="-fx-background-color:linear-gradient(to right,#10B981,#059669);
+                                       -fx-text-fill:white;
+                                       -fx-font-weight:900;
+                                       -fx-font-size:14;
+                                       -fx-background-radius:14;
+                                       -fx-padding:14 18;
+                                       -fx-cursor:hand;
+                                       -fx-effect:dropshadow(gaussian,rgba(16,185,129,0.45),12,0.3,0,4);"/>
+
+                        <ProgressBar fx:id="progressPaiement"
+                                     maxWidth="1e9"
+                                     progress="0"
+                                     visible="false" managed="false"
+                                     style="-fx-accent:#10B981;"/>
+
+                        <HBox fx:id="hboxMsgPaiement" spacing="5" alignment="CENTER_LEFT"
+                              visible="false" managed="false">
+                            <Label fx:id="iconMsgPaiement" text=""/>
+                            <Label fx:id="lblMsgPaiement" text="" wrapText="true"/>
+                        </HBox>
+                    </VBox>
+
+                    <!-- SUPPRESSION -->
                     <Label text="Supprimer une commande" styleClass="form-label"/>
-                    <Label text="Sélectionnez une ligne dans le tableau puis cliquez :"
+                    <Label text="Sélectionnez une ligne en attente puis cliquez :"
                            styleClass="muted" wrapText="true"/>
                     <Button fx:id="btnSupprimer"
-                            text="🗑  Supprimer la commande sélectionnée"
+                            text="🗑  Supprimer"
                             onAction="#onSupprimer"
                             maxWidth="1e9"
                             styleClass="btn-danger"/>
+
                     <HBox fx:id="hboxMsgDel" spacing="5" alignment="CENTER_LEFT"
                           visible="false" managed="false">
                         <Label fx:id="iconMsgDel" text=""/>
-                        <Label fx:id="lblMsgDel"  text="" wrapText="true"/>
+                        <Label fx:id="lblMsgDel" text="" wrapText="true"/>
                     </HBox>
+
                     <Label text="💡 Seules les commandes « en attente » peuvent être supprimées."
                            styleClass="muted" wrapText="true"/>
                 </VBox>
 
-                <!-- ══════════════════════════════════
-                     INVESTISSEUR : Confirmer / Annuler commande
-                     visible=false par défaut, affiché en runtime si investisseur
-                ══════════════════════════════════ -->
+                <!-- INVESTISSEUR : Gérer -->
                 <VBox fx:id="boxManage" spacing="8" visible="false" managed="false">
 
                     <Label text="Commande sélectionnée" styleClass="form-label"/>
                     <Label text="Cliquez sur une ligne dans le tableau pour la sélectionner."
                            styleClass="muted" wrapText="true"/>
 
-                    <!-- Info commande sélectionnée -->
                     <HBox fx:id="hboxSelectedInfo" spacing="8" alignment="CENTER_LEFT"
                           visible="false" managed="false">
                         <Label text="▶" style="-fx-text-fill:#E8A93A;"/>
@@ -150,49 +187,52 @@
 
                     <Separator opacity="0.4"/>
 
-                    <!-- Bouton Confirmer -->
                     <Button fx:id="btnConfirmer"
-                            text="✔  Confirmer la commande"
+                            text="✔  Confirmer"
                             onAction="#onConfirmer"
                             maxWidth="1e9"
                             styleClass="btn-primary"/>
 
-                    <!-- Bouton Annuler -->
                     <Button fx:id="btnAnnuler"
-                            text="✖  Annuler la commande"
+                            text="✖  Annuler"
                             onAction="#onAnnuler"
                             maxWidth="1e9"
                             styleClass="btn-danger"/>
 
-                    <!-- Message retour action investisseur -->
                     <HBox fx:id="hboxMsgStatut" spacing="5" alignment="CENTER_LEFT"
                           visible="false" managed="false">
                         <Label fx:id="iconMsgStatut" text=""/>
-                        <Label fx:id="lblMsgStatut"  text="" wrapText="true"/>
+                        <Label fx:id="lblMsgStatut" text="" wrapText="true"/>
                     </HBox>
 
-                    <Label text="💡 Seules les commandes « en attente » peuvent être confirmées ou annulées."
+                    <Label text="💡 Seules les commandes en attente peuvent être confirmées ou annulées."
                            styleClass="muted" wrapText="true"/>
                 </VBox>
-
             </VBox>
 
-            <!-- ─── CARTE DROITE : TableView — TOUJOURS VISIBLE ─── -->
+            <!-- RIGHT CARD : Table -->
             <VBox spacing="10" styleClass="card" HBox.hgrow="ALWAYS">
                 <Text text="Liste des commandes" styleClass="h2"/>
 
                 <TableView fx:id="tableCommandes" VBox.vgrow="ALWAYS">
                     <columns>
-                        <TableColumn fx:id="colIdCommande" text="ID"      prefWidth="60"/>
-                        <TableColumn fx:id="colIdClient"   text="Client"  prefWidth="80"/>
+                        <TableColumn fx:id="colIdCommande" text="ID" prefWidth="60"/>
+                        <TableColumn fx:id="colIdClient" text="Client" prefWidth="80"/>
                         <TableColumn fx:id="colProduitNom" text="Produit" prefWidth="200"/>
-                        <TableColumn fx:id="colQte"        text="Qté"     prefWidth="60"/>
-                        <TableColumn fx:id="colStatut"     text="Statut"  prefWidth="130"/>
+                        <TableColumn fx:id="colQte" text="Qté" prefWidth="60"/>
+                        <TableColumn fx:id="colStatut" text="Statut" prefWidth="130"/>
                     </columns>
                     <placeholder>
                         <Label text="Aucune commande trouvée." styleClass="muted"/>
                     </placeholder>
                 </TableView>
+
+                <!-- (Optionnel) petit bouton payer global si tu veux, masqué par défaut -->
+                <HBox spacing="10" alignment="CENTER_RIGHT" visible="false" managed="false">
+                    <Button text="💳 Payer la commande sélectionnée"
+                            onAction="#onPayerCommande"
+                            styleClass="btn-primary"/>
+                </HBox>
             </VBox>
 
         </HBox>

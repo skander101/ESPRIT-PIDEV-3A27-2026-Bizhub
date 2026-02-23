@@ -8,6 +8,8 @@ import com.bizhub.model.services.common.service.AppSession;
 import com.bizhub.model.services.common.ui.toastUtil;
 import com.bizhub.model.services.marketplace.CommandeNotificationService;
 import com.bizhub.model.services.marketplace.CommandePriorityEngine;
+import com.bizhub.model.services.marketplace.payment.PaymentResult;
+import com.bizhub.model.services.marketplace.payment.PaymentService;
 
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
@@ -32,6 +34,19 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * ProduitServiceController
+ *
+ * ✅ Fix principaux :
+ * - Stripe NE S'OUVRE PAS côté investisseur (auto-confirm + confirmer)
+ * - onConfirmerCommande() nettoyé (plus de variable result fantôme)
+ * - en auto-confirm : on génère URL Stripe (initiateStripeCheckout) et on save, sans ouvrir navigateur
+ *
+ * IMPORTANT :
+ * - PaymentService doit exposer : PaymentResult initiateStripeCheckout(CommandeJoinProduit c)
+ *   (ça crée session + retourne url, SANS ouvrir navigateur)
+ * - PaymentResult doit exposer : getRef(), getPaymentUrl()
+ */
 public class ProduitServiceController {
 
     private static final Logger LOGGER = Logger.getLogger(ProduitServiceController.class.getName());
@@ -60,6 +75,8 @@ public class ProduitServiceController {
     private final CommandePriorityEngine priorityEngine = new CommandePriorityEngine();
     private final CommandeNotificationService notifService =
             new CommandeNotificationService(DISCORD_WEBHOOK_URL);
+
+    private final PaymentService paymentService = new PaymentService();
 
     // ── Data ──────────────────────────────────────────────────
     private final ObservableList<ProduitService> produitsData = FXCollections.observableArrayList();
@@ -231,12 +248,12 @@ public class ProduitServiceController {
             // 1) Charger commandes reçues
             commandesData.setAll(commandeRepo.findByOwnerJoinProduit(ownerId));
 
-            // 2) Appliquer moteur IA (score + label + recommandation + raison)
+            // 2) Appliquer moteur IA
             for (CommandeJoinProduit c : commandesData) {
                 priorityEngine.apply(c);
             }
 
-            // 3) AUTO-CONFIRM
+            // 3) AUTO-CONFIRM (⚠️ sans ouvrir Stripe)
             if (AUTO_CONFIRM_ENABLED) {
                 int done = 0;
 
@@ -251,13 +268,24 @@ public class ProduitServiceController {
                         int updated = commandeRepo.updateStatutIfEnAttente(c.getIdCommande(), STATUT_CONFIRMEE);
 
                         if (updated == 1) {
+                            // ✅ créer URL Stripe SANS ouvrir
+                            PaymentResult pay = paymentService.initiateStripeCheckout(c);
+
+                            if (pay.isSuccess()) {
+                                commandeRepo.setPaymentInitiatedIfNull(
+                                        c.getIdCommande(),
+                                        pay.getRef(),
+                                        pay.getPaymentUrl()
+                                );
+                            } else {
+                                LOGGER.warning("Auto-confirm Stripe FAIL: " + safe(pay.getErrorMessage()));
+                            }
+
                             done++;
 
-                            // Toast fun
                             try { toastUtil.ai("🤖 Auto-confirm ✅\nCommande #" + c.getIdCommande() + "\nScore: " + score); }
                             catch (Exception ignore) {}
 
-                            // Webhook Discord
                             try {
                                 notifService.sendDiscord(
                                         "🤖 **BizHub Auto-confirm**\n"
@@ -266,6 +294,9 @@ public class ProduitServiceController {
                                                 + "• Qté : " + c.getQuantiteCommande() + "\n"
                                                 + "• Score : " + score + "\n"
                                                 + "• Raison : " + safe(c.getAutoReason())
+                                                + (pay.isSuccess()
+                                                ? "\n• Paiement : lien généré ✅"
+                                                : "\n• Paiement : échec Stripe ⚠ (" + safe(pay.getErrorMessage()) + ")")
                                 );
                             } catch (Exception ignore) {}
                         }
@@ -301,7 +332,6 @@ public class ProduitServiceController {
     private void onCmdSelectionChanged(CommandeJoinProduit sel) {
         resetMsg(hboxMsgCmd, iconMsgCmd, lblMsgCmd);
 
-        // reset buttons
         if (btnConfirmerCmd != null) {
             btnConfirmerCmd.setDisable(true);
             btnConfirmerCmd.setText("✔ Confirmer");
@@ -368,12 +398,38 @@ public class ProduitServiceController {
         }
 
         try {
+            // 1) Confirmer en DB
             commandeRepo.updateStatut(sel.getIdCommande(), STATUT_CONFIRMEE);
-            toastUtil.success("✅ Confirmée : #" + sel.getIdCommande());
+
+            // 2) Générer lien Stripe (SANS ouvrir)
+            PaymentResult pay = paymentService.initiateStripeCheckout(sel);
+
+            if (pay.isSuccess()) {
+                commandeRepo.setPaymentInitiatedIfNull(
+                        sel.getIdCommande(),
+                        pay.getRef(),
+                        pay.getPaymentUrl()
+                );
+
+                showOk(hboxMsgCmd, iconMsgCmd, lblMsgCmd, null,
+                        "✓ Commande #" + sel.getIdCommande() + " confirmée.\n"
+                                + "💳 Lien de paiement généré (le client pourra payer).");
+                try { toastUtil.success("✅ Confirmée : #" + sel.getIdCommande()); } catch (Exception ignore) {}
+
+            } else {
+                showErr(hboxMsgCmd, iconMsgCmd, lblMsgCmd, null,
+                        "✓ Commande #" + sel.getIdCommande() + " confirmée.\n"
+                                + "⚠ Stripe : " + pay.getErrorMessage()
+                                + "\n(Le client ne pourra pas payer tant que Stripe échoue)");
+                try { toastUtil.error("Stripe : " + pay.getErrorMessage()); } catch (Exception ignore) {}
+            }
+
+            // 3) Refresh
             refreshCommandes();
+
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "onConfirmerCommande", e);
-            toastUtil.error("Erreur : " + e.getMessage());
+            try { toastUtil.error("Erreur : " + e.getMessage()); } catch (Exception ignore) {}
             showErr(hboxMsgCmd, iconMsgCmd, lblMsgCmd, null, "Erreur : " + e.getMessage());
         }
     }
@@ -398,11 +454,11 @@ public class ProduitServiceController {
 
         try {
             commandeRepo.updateStatut(sel.getIdCommande(), STATUT_ANNULEE);
-            toastUtil.warning("⛔ Annulée : #" + sel.getIdCommande());
+            try { toastUtil.error("⛔ Annulée : #" + sel.getIdCommande()); } catch (Exception ignore) {}
             refreshCommandes();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "onAnnulerCommande", e);
-            toastUtil.error("Erreur : " + e.getMessage());
+            try { toastUtil.error("Erreur : " + e.getMessage()); } catch (Exception ignore) {}
             showErr(hboxMsgCmd, iconMsgCmd, lblMsgCmd, null, "Erreur : " + e.getMessage());
         }
     }
@@ -498,7 +554,6 @@ public class ProduitServiceController {
                 CommandeJoinProduit row = getRowItem();
                 int score = row != null ? row.getPriorityScore() : 0;
 
-                // reset base
                 badge.setStyle("-fx-padding:4 10; -fx-font-weight:800; -fx-background-radius:999;"
                         + "-fx-border-radius:999; -fx-border-width:1; -fx-font-size:11px;");
 
@@ -673,7 +728,7 @@ public class ProduitServiceController {
             onVider();
 
             showOk(hboxMsgCrud, iconMsgCrud, lblMsgCrud, null, "✓ Produit ajouté avec succès.");
-            toastUtil.success("✅ Produit ajouté");
+            try { toastUtil.success("✅ Produit ajouté"); } catch (Exception ignore) {}
         } catch (IllegalArgumentException e) {
             showErr(hboxMsgCrud, iconMsgCrud, lblMsgCrud, null, e.getMessage());
         } catch (Exception e) {
@@ -697,7 +752,7 @@ public class ProduitServiceController {
             repo.update(p);
             refreshProduits();
             showOk(hboxMsgCrud, iconMsgCrud, lblMsgCrud, null, "✓ Produit modifié avec succès.");
-            toastUtil.success("✏️ Produit modifié");
+            try { toastUtil.success("✏️ Produit modifié"); } catch (Exception ignore) {}
         } catch (IllegalArgumentException e) {
             showErr(hboxMsgCrud, iconMsgCrud, lblMsgCrud, null, e.getMessage());
         } catch (Exception e) {
@@ -715,7 +770,7 @@ public class ProduitServiceController {
             refreshProduits();
             onVider();
             showOk(hboxMsgCrud, iconMsgCrud, lblMsgCrud, null, "✓ Produit supprimé.");
-            toastUtil.warning("🗑️ Produit supprimé");
+            try { toastUtil.error("🗑️ Produit supprimé"); } catch (Exception ignore) {}
         } catch (IllegalArgumentException e) {
             showErr(hboxMsgCrud, iconMsgCrud, lblMsgCrud, null, e.getMessage());
         } catch (Exception e) {

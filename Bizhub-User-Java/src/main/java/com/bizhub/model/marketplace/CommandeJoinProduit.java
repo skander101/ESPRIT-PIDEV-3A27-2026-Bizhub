@@ -1,64 +1,91 @@
 package com.bizhub.model.marketplace;
 
+import java.math.BigDecimal;
+
 public class CommandeJoinProduit {
-    private boolean autoConfirmRecommended;
-    private String autoReason;
 
-    public boolean isAutoConfirmRecommended() { return autoConfirmRecommended; }
-    public void setAutoConfirmRecommended(boolean v) { this.autoConfirmRecommended = v; }
-
-    public String getAutoReason() { return autoReason; }
-    public void setAutoReason(String autoReason) { this.autoReason = autoReason; }
-
-    private int idCommande;
-    private int idClient;
-    private int idProduit;
-    private String produitNom;
-    private int quantiteCommande;
+    // ── Champs commande ──────────────────────────────────
+    private int    idCommande;
+    private int    idClient;
+    private int    idProduit;
+    private int    quantiteCommande;
     private String statut;
-    private int priorityScore;
-    private String priorityLabel;
-
-    // Optionnel (recommandé) si tu as une date en DB :
     private java.util.Date dateCommande;
 
-    public int getIdCommande() { return idCommande; }
-    public void setIdCommande(int idCommande) { this.idCommande = idCommande; }
+    // ── Champs produit (jointure) ────────────────────────
+    private String     produitNom;
+    private BigDecimal prix;          // ← mappé depuis la requête SQL JOIN
 
-    public int getIdClient() { return idClient; }
-    public void setIdClient(int idClient) { this.idClient = idClient; }
+    // ── Priority Engine ──────────────────────────────────
+    private int    priorityScore;
+    private String priorityLabel;
+    private boolean autoConfirmRecommended;
+    private String  autoReason;
 
-    public int getIdProduit() { return idProduit; }
-    public void setIdProduit(int idProduit) { this.idProduit = idProduit; }
-
-    public String getProduitNom() { return produitNom; }
-    public void setProduitNom(String produitNom) { this.produitNom = produitNom; }
-
-    public int getQuantiteCommande() { return quantiteCommande; }
-    public void setQuantiteCommande(int quantiteCommande) { this.quantiteCommande = quantiteCommande; }
-
-    public String getStatut() { return statut; }
-    public void setStatut(String statut) { this.statut = statut; }
-
-    public int getPriorityScore() { return priorityScore; }
-    public void setPriorityScore(int priorityScore) { this.priorityScore = priorityScore; }
-
-    public String getPriorityLabel() { return priorityLabel; }
-    public void setPriorityLabel(String priorityLabel) { this.priorityLabel = priorityLabel; }
-
-    public java.util.Date getDateCommande() { return dateCommande; }
-    public void setDateCommande(java.util.Date dateCommande) { this.dateCommande = dateCommande; }
+    // ── Paiement Stripe ──────────────────────────────────
     private String paymentStatus;
     private String paymentRef;
     private String paymentUrl;
 
-    public String getPaymentStatus() { return paymentStatus; }
-    public void setPaymentStatus(String s) { this.paymentStatus = s; }
+    // =====================================================
+    // GETTERS / SETTERS — Commande
+    // =====================================================
+    public int    getIdCommande()       { return idCommande; }
+    public void   setIdCommande(int v)  { this.idCommande = v; }
 
-    public String getPaymentRef() { return paymentRef; }
-    public void setPaymentRef(String s) { this.paymentRef = s; }
+    public int    getIdClient()         { return idClient; }
+    public void   setIdClient(int v)    { this.idClient = v; }
 
-    public String getPaymentUrl() { return paymentUrl; }
-    public void setPaymentUrl(String s) { this.paymentUrl = s; }
+    public int    getIdProduit()        { return idProduit; }
+    public void   setIdProduit(int v)   { this.idProduit = v; }
+
+    public int    getQuantiteCommande()      { return quantiteCommande; }
+    public void   setQuantiteCommande(int v) { this.quantiteCommande = v; }
+
+    public String getStatut()           { return statut; }
+    public void   setStatut(String v)   { this.statut = v; }
+
+    public java.util.Date getDateCommande()          { return dateCommande; }
+    public void           setDateCommande(java.util.Date v) { this.dateCommande = v; }
+
+    // =====================================================
+    // GETTERS / SETTERS — Produit (jointure SQL)
+    // =====================================================
+    public String getProduitNom()          { return produitNom; }
+    public void   setProduitNom(String v)  { this.produitNom = v; }
+
+    /**
+     * Prix unitaire du produit lié à la commande.
+     * Mappé depuis la colonne p.prix dans la requête SQL JOIN.
+     * Utilisé par PaymentService pour calculer le montant Stripe.
+     */
+    public BigDecimal getPrix()          { return prix; }
+    public void       setPrix(BigDecimal v) { this.prix = v; }
+
+    // =====================================================
+    // GETTERS / SETTERS — Priority Engine
+    // =====================================================
+    public int     getPriorityScore()        { return priorityScore; }
+    public void    setPriorityScore(int v)   { this.priorityScore = v; }
+
+    public String  getPriorityLabel()        { return priorityLabel; }
+    public void    setPriorityLabel(String v){ this.priorityLabel = v; }
+
+    public boolean isAutoConfirmRecommended()       { return autoConfirmRecommended; }
+    public void    setAutoConfirmRecommended(boolean v) { this.autoConfirmRecommended = v; }
+
+    public String  getAutoReason()           { return autoReason; }
+    public void    setAutoReason(String v)   { this.autoReason = v; }
+
+    // =====================================================
+    // GETTERS / SETTERS — Paiement Stripe
+    // =====================================================
+    public String getPaymentStatus()         { return paymentStatus; }
+    public void   setPaymentStatus(String v) { this.paymentStatus = v; }
+
+    public String getPaymentRef()            { return paymentRef; }
+    public void   setPaymentRef(String v)    { this.paymentRef = v; }
+
+    public String getPaymentUrl()            { return paymentUrl; }
+    public void   setPaymentUrl(String v)    { this.paymentUrl = v; }
 }
-
