@@ -5,12 +5,17 @@ import com.bizhub.model.services.common.service.AppSession;
 import com.bizhub.model.services.common.service.NavigationService;
 import com.bizhub.model.services.common.service.Services;
 import com.bizhub.model.services.common.service.TotpService;
+import com.bizhub.model.services.common.service.FacePlusPlusService;
+import com.bizhub.model.services.common.service.FaceDetectionResult;
+import com.bizhub.service.WebcamService;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
@@ -31,6 +36,7 @@ public class VerificationController {
     @FXML private Label step1Circle;
     @FXML private Label step2Circle;
     @FXML private Label step3Circle;
+    @FXML private Label step4Circle;
 
     // Email section
     @FXML private VBox emailSection;
@@ -55,6 +61,14 @@ public class VerificationController {
     @FXML private Button verifyTotpButton;
     @FXML private ProgressIndicator totpProgress;
 
+    // Face scan section
+    @FXML private VBox faceScanSection;
+    @FXML private ImageView webcamPreview;
+    @FXML private Button captureFaceButton;
+    @FXML private ProgressIndicator faceScanProgress;
+    @FXML private Label faceScanStatusLabel;
+    @FXML private Rectangle faceBoundingBox;
+
     // Success section
     @FXML private VBox successSection;
 
@@ -70,6 +84,10 @@ public class VerificationController {
     // Track verification state
     private boolean emailVerified = false;
     private boolean totpVerified = false;
+    private boolean faceVerified = false;
+
+    private WebcamService webcamService;
+    private FacePlusPlusService faceService;
 
     @FXML
     public void initialize() {
@@ -86,6 +104,14 @@ public class VerificationController {
             disableAllSections();
             return;
         }
+
+        // Initialize face scan section as hidden
+        faceScanSection.setVisible(false);
+        faceScanSection.setManaged(false);
+
+        // Initialize webcam service for face capture
+        webcamService = new WebcamService();
+        faceService = new FacePlusPlusService();
 
         // Show email for verification
         emailAddressLabel.setText(pendingUser.getEmail());
@@ -314,7 +340,7 @@ public class VerificationController {
                         totpVerified = true;
                         // Store the TOTP secret for future logins
                         pendingUser.setTotpSecret(totpSetup.getSecret());
-                        onAllVerificationComplete();
+                        onTotpVerificationComplete();
                     } else {
                         statusLabel.setText("Invalid code. Please check your authenticator app and try again.");
                         statusLabel.setStyle("-fx-text-fill: #f44336;");
@@ -322,6 +348,90 @@ public class VerificationController {
                     }
                 });
             });
+    }
+
+    private void onTotpVerificationComplete() {
+        // Update step indicators
+        step2Circle.getStyleClass().add("step-complete");
+        step3Circle.getStyleClass().add("step-active");
+
+        // Hide TOTP section, show face scan section
+        totpSection.setVisible(false);
+        totpSection.setManaged(false);
+
+        // Start face scan setup
+        setupFaceScan();
+    }
+
+    private void setupFaceScan() {
+        faceScanSection.setVisible(true);
+        faceScanSection.setManaged(true);
+        faceScanStatusLabel.setText("Position your face in the camera and click Capture");
+        faceScanStatusLabel.setStyle("-fx-text-fill: #4CAF50;");
+
+        // Start webcam preview
+        webcamService.start(webcamPreview);
+    }
+
+    @FXML
+    public void onCaptureFace() {
+        faceScanProgress.setVisible(true);
+        captureFaceButton.setDisable(true);
+        faceScanStatusLabel.setText("Detecting face...");
+
+        // Capture and detect face
+        Task<FaceDetectionResult> task = webcamService.detectFaceInCurrentFrame();
+
+        task.setOnSucceeded(e -> {
+            FaceDetectionResult result = task.getValue();
+
+            if (result != null && result.faceDetected()) {
+                // Draw bounding box
+                if (result.boundingBox() != null) {
+                    drawFaceBoundingBox(result.boundingBox());
+                }
+
+                // Store face token and proceed
+                pendingUser.setFaceToken(result.faceToken());
+                faceVerified = true;
+
+                faceScanStatusLabel.setText("Face captured successfully!");
+                faceScanStatusLabel.setStyle("-fx-text-fill: #4CAF50;");
+
+                // Stop webcam
+                webcamService.stop();
+
+                // Small delay before completing
+                Platform.runLater(() -> {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ignored) {}
+                    onAllVerificationComplete();
+                });
+            } else {
+                faceScanProgress.setVisible(false);
+                captureFaceButton.setDisable(false);
+                faceScanStatusLabel.setText("No face detected. Please try again.");
+                faceScanStatusLabel.setStyle("-fx-text-fill: #f44336;");
+            }
+        });
+
+        task.setOnFailed(e -> {
+            faceScanProgress.setVisible(false);
+            captureFaceButton.setDisable(false);
+            faceScanStatusLabel.setText("Face detection failed: " + task.getException().getMessage());
+            faceScanStatusLabel.setStyle("-fx-text-fill: #f44336;");
+        });
+
+        new Thread(task).start();
+    }
+
+    private void drawFaceBoundingBox(javafx.geometry.Rectangle2D box) {
+        faceBoundingBox.setVisible(true);
+        faceBoundingBox.setX(box.getMinX());
+        faceBoundingBox.setY(box.getMinY());
+        faceBoundingBox.setWidth(box.getWidth());
+        faceBoundingBox.setHeight(box.getHeight());
     }
 
     private void onAllVerificationComplete() {
@@ -392,17 +502,24 @@ public class VerificationController {
         } else if ("totp".equals(section)) {
             totpProgress.setVisible(loading);
             verifyTotpButton.setDisable(loading);
+        } else if ("face".equals(section)) {
+            faceScanProgress.setVisible(loading);
+            captureFaceButton.setDisable(loading);
         }
     }
 
     private void disableAllSections() {
         emailSection.setDisable(true);
         totpSection.setDisable(true);
+        faceScanSection.setDisable(true);
     }
 
     public void cleanup() {
         if (emailPollingExecutor != null) {
             emailPollingExecutor.shutdownNow();
+        }
+        if (webcamService != null) {
+            webcamService.stop();
         }
     }
 }

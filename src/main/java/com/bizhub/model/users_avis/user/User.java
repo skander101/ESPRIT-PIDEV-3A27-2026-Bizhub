@@ -55,6 +55,9 @@ public class User {
     // 2FA/TOTP
     private String totpSecret;
 
+    // Face recognition
+    private String faceToken;
+
 
     public User() {
     }
@@ -312,6 +315,14 @@ public class User {
 
     public void setTotpSecret(String totpSecret) {
         this.totpSecret = totpSecret;
+    }
+
+    public String getFaceToken() {
+        return faceToken;
+    }
+
+    public void setFaceToken(String faceToken) {
+        this.faceToken = faceToken;
     }
 
     @Override

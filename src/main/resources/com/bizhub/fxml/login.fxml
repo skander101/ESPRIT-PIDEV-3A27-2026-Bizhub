@@ -5,6 +5,7 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Rectangle?>
 <?import javafx.scene.text.*?>
 
 <StackPane xmlns="http://javafx.com/javafx"
@@ -60,28 +61,31 @@
             </HBox>
         </VBox>
 
-        <!-- TOTP Verification Section (hidden by default) -->
-        <VBox fx:id="totpSection" spacing="14" visible="false" managed="false">
+        <!-- Face Verification Section (hidden by default) -->
+        <VBox fx:id="faceVerificationSection" spacing="14" visible="false" managed="false">
             <VBox spacing="4" alignment="CENTER">
                 <Text text="🔐" style="-fx-font-size: 32px;" />
-                <Text text="Two-Factor Authentication" styleClass="section-title" />
-                <Text text="Enter the 6-digit code from your authenticator app" styleClass="subtitle" />
+                <Text text="Face Verification" styleClass="section-title" />
+                <Text text="Position your face in front of the camera and click Verify"
+                      styleClass="subtitle" wrappingWidth="400" textAlignment="CENTER" />
             </VBox>
 
-            <HBox alignment="CENTER" spacing="8">
-                <TextField fx:id="totpField1" prefWidth="45" styleClass="pin-field" />
-                <TextField fx:id="totpField2" prefWidth="45" styleClass="pin-field" />
-                <TextField fx:id="totpField3" prefWidth="45" styleClass="pin-field" />
-                <TextField fx:id="totpField4" prefWidth="45" styleClass="pin-field" />
-                <TextField fx:id="totpField5" prefWidth="45" styleClass="pin-field" />
-                <TextField fx:id="totpField6" prefWidth="45" styleClass="pin-field" />
-            </HBox>
+            <!-- Webcam Preview with bounding box overlay -->
+            <StackPane alignment="CENTER">
+                <ImageView fx:id="webcamPreview" fitWidth="320" fitHeight="240" preserveRatio="true" style="-fx-border-color: #ddd; -fx-border-radius: 8px;" />
+                <Rectangle fx:id="faceBoundingBox" visible="false" fill="transparent" stroke="#4CAF50" strokeWidth="3" />
+            </StackPane>
 
-            <Button fx:id="verifyTotpButton" text="Verify" onAction="#onVerifyTotp" maxWidth="1.7976931348623157E308" styleClass="btn-primary" />
+            <Label fx:id="faceStatusLabel" text="" styleClass="subtitle" textAlignment="CENTER" />
+
+            <VBox spacing="10" alignment="CENTER">
+                <Button fx:id="captureFaceButton" text="Verify Face" onAction="#onVerifyFace"
+                        maxWidth="1.7976931348623157E308" styleClass="btn-primary" />
+            </VBox>
 
             <Hyperlink text="← Back to login" onAction="#onBackToLogin" />
 
-            <ProgressIndicator fx:id="totpProgress" visible="false" prefWidth="24" prefHeight="24" />
+            <ProgressIndicator fx:id="faceProgress" visible="false" prefWidth="24" prefHeight="24" />
         </VBox>
 
         <Label fx:id="errorLabel" wrapText="true" styleClass="error-text" />

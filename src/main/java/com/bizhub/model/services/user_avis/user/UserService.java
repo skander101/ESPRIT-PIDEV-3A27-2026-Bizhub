@@ -44,8 +44,8 @@ public class UserService {
                 "business_type, delivery_zones, payment_methods, return_policy, " +
                 "investment_sector, max_budget, years_experience, represented_company, " +
                 "specialty, hourly_rate, availability, cv_url, " +
-                "is_active, totp_secret" +
-                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                "is_active, totp_secret, face_token" +
+                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
         try (PreparedStatement pst = cnx.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             int i = 1;
@@ -83,6 +83,7 @@ public class UserService {
 
             pst.setBoolean(i++, u.isActive());
             setStringOrNull(pst, i++, u.getTotpSecret());
+            setStringOrNull(pst, i++, u.getFaceToken());
 
             pst.executeUpdate();
 
@@ -287,6 +288,7 @@ public class UserService {
 
         u.setActive(rs.getBoolean("is_active"));
         u.setTotpSecret(rs.getString("totp_secret"));
+        u.setFaceToken(rs.getString("face_token"));
 
         Timestamp createdAt = rs.getTimestamp("created_at");
         u.setCreatedAt(createdAt == null ? null : createdAt.toLocalDateTime());
@@ -312,6 +314,22 @@ public class UserService {
     private static void setStringOrNull(PreparedStatement pst, int idx, String value) throws SQLException {
         if (value == null || value.trim().isEmpty()) pst.setNull(idx, Types.VARCHAR);
         else pst.setString(idx, value.trim());
+    }
+
+    /**
+     * Updates the face token for a user.
+     *
+     * @param userId the user ID
+     * @param faceToken the Face++ face token
+     * @throws SQLException if update fails
+     */
+    public void updateFaceToken(int userId, String faceToken) throws SQLException {
+        String sql = "UPDATE `user` SET face_token = ? WHERE user_id = ?";
+        try (PreparedStatement pst = cnx.prepareStatement(sql)) {
+            setStringOrNull(pst, 1, faceToken);
+            pst.setInt(2, userId);
+            pst.executeUpdate();
+        }
     }
 
     private String getFileExtension(String fileName) {

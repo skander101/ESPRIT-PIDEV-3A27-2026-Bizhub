@@ -3,21 +3,26 @@ package com.bizhub.controller.users_avis.user;
 import com.bizhub.model.users_avis.user.User;
 import com.bizhub.model.services.common.service.AppSession;
 import com.bizhub.model.services.common.service.AuthService;
+import com.bizhub.model.services.common.service.FacePlusPlusService;
 import com.bizhub.model.services.common.service.NavigationService;
 import com.bizhub.model.services.common.service.Services;
+import com.bizhub.service.WebcamService;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
 import java.sql.SQLException;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 /**
- * Login controller with TOTP (2FA) support.
+ * Login controller with Face Recognition verification.
  */
 public class LoginController {
 
@@ -27,28 +32,25 @@ public class LoginController {
     @FXML private PasswordField passwordField;
     @FXML private Button loginButton;
 
-    // TOTP section
-    @FXML private VBox totpSection;
-    @FXML private TextField totpField1;
-    @FXML private TextField totpField2;
-    @FXML private TextField totpField3;
-    @FXML private TextField totpField4;
-    @FXML private TextField totpField5;
-    @FXML private TextField totpField6;
-    @FXML private Button verifyTotpButton;
-    @FXML private ProgressIndicator totpProgress;
+    // Face verification section
+    @FXML private VBox faceVerificationSection;
+    @FXML private ImageView webcamPreview;
+    @FXML private Button captureFaceButton;
+    @FXML private Button backToLoginButton;
+    @FXML private ProgressIndicator faceProgress;
+    @FXML private Label faceStatusLabel;
+    @FXML private Rectangle faceBoundingBox;
 
     @FXML private Label errorLabel;
 
     private AuthService authService;
-    private User pendingUser; // User awaiting TOTP verification
+    private User pendingUser; // User awaiting face verification
+    private WebcamService webcamService;
+    private FacePlusPlusService faceService;
 
     @FXML
     public void initialize() {
         errorLabel.setText("");
-
-        // Setup TOTP fields auto-advance
-        setupTotpFields();
 
         // Basic UX: press Enter in password field triggers login
         passwordField.setOnAction(e -> {
@@ -67,59 +69,12 @@ public class LoginController {
                 return;
             }
             authService = Services.auth();
+            webcamService = new WebcamService();
+            faceService = new FacePlusPlusService();
         } catch (Exception e) {
             showError("DB init failed: " + e.getMessage());
             loginButton.setDisable(true);
         }
-    }
-
-    private void setupTotpFields() {
-        TextField[] totpFields = {totpField1, totpField2, totpField3, totpField4, totpField5, totpField6};
-
-        for (int i = 0; i < totpFields.length; i++) {
-            final int index = i;
-            TextField field = totpFields[i];
-
-            // Allow only single digit
-            field.textProperty().addListener((obs, oldValue, newValue) -> {
-                if (newValue.length() > 1) {
-                    field.setText(newValue.substring(0, 1));
-                }
-                // Auto-advance to next field
-                if (newValue.length() == 1 && index < totpFields.length - 1) {
-                    totpFields[index + 1].requestFocus();
-                }
-                // Auto-verify when all fields are filled
-                if (index == totpFields.length - 1 && newValue.length() == 1) {
-                    String code = getTotpCode();
-                    if (code.length() == 6) {
-                        onVerifyTotp();
-                    }
-                }
-            });
-
-            // Handle backspace to go to previous field
-            field.setOnKeyPressed(event -> {
-                if (event.getCode().toString().equals("BACK_SPACE") && field.getText().isEmpty() && index > 0) {
-                    totpFields[index - 1].requestFocus();
-                }
-            });
-        }
-    }
-
-    private String getTotpCode() {
-        return totpField1.getText() + totpField2.getText() + totpField3.getText() +
-               totpField4.getText() + totpField5.getText() + totpField6.getText();
-    }
-
-    private void clearTotpFields() {
-        totpField1.clear();
-        totpField2.clear();
-        totpField3.clear();
-        totpField4.clear();
-        totpField5.clear();
-        totpField6.clear();
-        totpField1.requestFocus();
     }
 
     @FXML
@@ -138,13 +93,13 @@ public class LoginController {
 
             User u = loggedIn.get();
 
-            // Check if user has TOTP enabled
-            if (u.getTotpSecret() != null && !u.getTotpSecret().isBlank()) {
-                // User has 2FA - show TOTP verification
+            // Check if user has face token for verification
+            if (u.getFaceToken() != null && !u.getFaceToken().isBlank()) {
+                // User has face token - show face verification
                 pendingUser = u;
-                showTotpSection();
+                showFaceVerificationSection();
             } else {
-                // No 2FA - complete login directly
+                // No face token - complete login directly (fallback)
                 completeLogin(u);
             }
 
@@ -153,57 +108,111 @@ public class LoginController {
         }
     }
 
-    private void showTotpSection() {
+    private void showFaceVerificationSection() {
         loginSection.setVisible(false);
         loginSection.setManaged(false);
-        totpSection.setVisible(true);
-        totpSection.setManaged(true);
-        clearTotpFields();
+        faceVerificationSection.setVisible(true);
+        faceVerificationSection.setManaged(true);
+        faceBoundingBox.setVisible(false);
         clearError();
+        faceStatusLabel.setText("Position your face in the camera and click Verify");
+        faceStatusLabel.setStyle("-fx-text-fill: #4CAF50;");
+
+        // Start webcam preview
+        webcamService.start(webcamPreview);
     }
 
     @FXML
-    public void onVerifyTotp() {
-        String code = getTotpCode();
-
-        if (code.length() != 6) {
-            showError("Please enter the complete 6-digit code.");
-            return;
-        }
-
+    public void onVerifyFace() {
         if (pendingUser == null) {
             showError("Session expired. Please login again.");
             onBackToLogin();
             return;
         }
 
-        setTotpLoading(true);
-        clearError();
+        String faceToken = pendingUser.getFaceToken();
+        if (faceToken == null || faceToken.isBlank()) {
+            showError("No face reference found. Please contact support.");
+            return;
+        }
 
-        Services.totp().verifyCodeAsync(pendingUser.getTotpSecret(), code)
-            .thenAccept(verified -> {
-                Platform.runLater(() -> {
-                    setTotpLoading(false);
+        setFaceLoading(true);
+        faceStatusLabel.setText("Capturing and comparing face...");
+        faceStatusLabel.setStyle("-fx-text-fill: #2196F3;");
 
-                    if (verified) {
+        // Capture current frame from webcam
+        Image currentFrame = webcamService.captureSnapshot();
+        if (currentFrame == null) {
+            setFaceLoading(false);
+            showError("Failed to capture image from camera.");
+            faceStatusLabel.setText("Camera capture failed. Please try again.");
+            faceStatusLabel.setStyle("-fx-text-fill: #f44336;");
+            return;
+        }
+
+        // Compare captured face with stored token
+        Task<Double> compareTask = faceService.compareWithFaceTokenTask(faceToken, currentFrame);
+
+        compareTask.setOnSucceeded(e -> {
+            Platform.runLater(() -> {
+                setFaceLoading(false);
+                double confidence = compareTask.getValue();
+
+                // Threshold for face match (Face++ recommends 70-80 for high confidence)
+                double threshold = 70.0;
+
+                if (confidence >= threshold) {
+                    faceStatusLabel.setText("Face verified! Confidence: " + String.format("%.1f", confidence) + "%");
+                    faceStatusLabel.setStyle("-fx-text-fill: #4CAF50;");
+
+                    // Stop webcam
+                    webcamService.stop();
+
+                    // Complete login after brief delay
+                    Platform.runLater(() -> {
+                        try {
+                            Thread.sleep(800);
+                        } catch (InterruptedException ignored) {}
                         completeLogin(pendingUser);
-                    } else {
-                        showError("Invalid code. Please try again.");
-                        clearTotpFields();
-                    }
-                });
+                    });
+                } else {
+                    faceStatusLabel.setText("Face mismatch. Confidence: " + String.format("%.1f", confidence) + "%");
+                    faceStatusLabel.setStyle("-fx-text-fill: #f44336;");
+                    showError("Face verification failed. Please try again.");
+                }
             });
+        });
+
+        compareTask.setOnFailed(e -> {
+            Platform.runLater(() -> {
+                setFaceLoading(false);
+                String errorMsg = compareTask.getException() != null 
+                    ? compareTask.getException().getMessage() 
+                    : "Unknown error";
+                showError("Face verification error: " + errorMsg);
+                faceStatusLabel.setText("Verification failed. Please try again.");
+                faceStatusLabel.setStyle("-fx-text-fill: #f44336;");
+            });
+        });
+
+        new Thread(compareTask).start();
     }
 
     @FXML
     public void onBackToLogin() {
         pendingUser = null;
-        totpSection.setVisible(false);
-        totpSection.setManaged(false);
+        webcamService.stop();
+        faceVerificationSection.setVisible(false);
+        faceVerificationSection.setManaged(false);
         loginSection.setVisible(true);
         loginSection.setManaged(true);
         clearError();
         passwordField.clear();
+    }
+
+    private void setFaceLoading(boolean loading) {
+        faceProgress.setVisible(loading);
+        captureFaceButton.setDisable(loading);
     }
 
     private void completeLogin(User u) {
@@ -217,11 +226,6 @@ public class LoginController {
         } else {
             nav.goToProfile();
         }
-    }
-
-    private void setTotpLoading(boolean loading) {
-        totpProgress.setVisible(loading);
-        verifyTotpButton.setDisable(loading);
     }
 
     @FXML

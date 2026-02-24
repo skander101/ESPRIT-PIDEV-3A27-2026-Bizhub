@@ -5,6 +5,7 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Rectangle?>
 <?import javafx.scene.text.*?>
 
 <StackPane xmlns="http://javafx.com/javafx"
@@ -40,14 +41,19 @@
                 <Label fx:id="step1Circle" text="1" styleClass="step-circle, step-active" />
                 <Label text="Email" styleClass="step-label" />
             </VBox>
-            <Separator prefWidth="50" />
+            <Separator prefWidth="30" />
             <VBox alignment="CENTER" spacing="4">
                 <Label fx:id="step2Circle" text="2" styleClass="step-circle" />
                 <Label text="2FA" styleClass="step-label" />
             </VBox>
-            <Separator prefWidth="50" />
+            <Separator prefWidth="30" />
             <VBox alignment="CENTER" spacing="4">
-                <Label fx:id="step3Circle" text="✓" styleClass="step-circle" />
+                <Label fx:id="step3Circle" text="3" styleClass="step-circle" />
+                <Label text="Face" styleClass="step-label" />
+            </VBox>
+            <Separator prefWidth="30" />
+            <VBox alignment="CENTER" spacing="4">
+                <Label fx:id="step4Circle" text="✓" styleClass="step-circle" />
                 <Label text="Done" styleClass="step-label" />
             </VBox>
         </HBox>
@@ -110,6 +116,28 @@
             </VBox>
 
             <ProgressIndicator fx:id="totpProgress" visible="false" prefWidth="30" prefHeight="30" />
+        </VBox>
+
+        <!-- Face Scan Verification Section -->
+        <VBox fx:id="faceScanSection" spacing="16" alignment="CENTER" visible="false" managed="false">
+            <Text text="Face Recognition Setup" styleClass="section-title" />
+            <Text text="Position your face in front of the camera and click Capture"
+                  styleClass="subtitle" wrappingWidth="400" textAlignment="CENTER" />
+
+            <!-- Webcam Preview with bounding box overlay -->
+            <StackPane>
+                <ImageView fx:id="webcamPreview" fitWidth="320" fitHeight="240" preserveRatio="true" style="-fx-border-color: #ddd; -fx-border-radius: 8px;" />
+                <Rectangle fx:id="faceBoundingBox" visible="false" fill="transparent" stroke="#4CAF50" strokeWidth="3" />
+            </StackPane>
+
+            <Label fx:id="faceScanStatusLabel" text="" styleClass="subtitle" />
+
+            <VBox spacing="10" alignment="CENTER">
+                <Button fx:id="captureFaceButton" text="Capture Face"
+                        onAction="#onCaptureFace" styleClass="btn, btn-primary" />
+            </VBox>
+
+            <ProgressIndicator fx:id="faceScanProgress" visible="false" prefWidth="30" prefHeight="30" />
         </VBox>
 
         <!-- Success Section -->
