@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+
+<BorderPane stylesheets="@../css/theme.css"
+            xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.bizhub.user.controller.AdminDashboardController">
+
+    <left>
+        <fx:include source="admin-sidebar.fxml" />
+    </left>
+
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="12" styleClass="topbar">
+            <padding>
+                <Insets bottom="14" left="16" right="16" top="14" />
+            </padding>
+            <Text styleClass="h1" text="Admin Dashboard" />
+            <Pane HBox.hgrow="ALWAYS" />
+            <Label fx:id="adminNameLabel" styleClass="subtitle" text="Admin" />
+        </HBox>
+    </top>
+
+    <center>
+        <VBox spacing="14" VBox.vgrow="ALWAYS">
+            <padding>
+                <Insets bottom="16" left="16" right="16" top="14" />
+            </padding>
+
+            <HBox spacing="14">
+                <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                    <Text text="Utilisateurs" styleClass="h2" />
+                    <HBox spacing="18">
+                        <VBox spacing="4">
+                            <Text text="Total" styleClass="hint" />
+                            <Text fx:id="totalUsersText" text="0" styleClass="h2" />
+                        </VBox>
+                        <VBox spacing="4">
+                            <Text text="Actifs" styleClass="hint" />
+                            <Text fx:id="activeUsersText" text="0" styleClass="h2" />
+                        </VBox>
+                        <VBox spacing="4">
+                            <Text text="Inactifs" styleClass="hint" />
+                            <Text fx:id="inactiveUsersText" text="0" styleClass="h2" />
+                        </VBox>
+                        <VBox spacing="4">
+                            <Text text="Note moy." styleClass="hint" />
+                            <Text fx:id="avgRatingText" text="0.00" styleClass="h2" />
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+                <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                    <Text text="Répartition" styleClass="h2" />
+                    <PieChart fx:id="usersPie" prefHeight="180" prefWidth="320" />
+                </VBox>
+            </HBox>
+
+            <VBox styleClass="card" spacing="10" VBox.vgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Text text="Derniers utilisateurs" styleClass="h2"/>
+                    <Pane HBox.hgrow="ALWAYS"/>
+                    <Button text="Voir tout" styleClass="btn" onAction="#goUsers" />
+                </HBox>
+
+                <TableView fx:id="latestUsersTable" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colLatestName" text="Nom" prefWidth="180" />
+                        <TableColumn fx:id="colLatestEmail" text="Email" prefWidth="220" />
+                        <TableColumn fx:id="colLatestType" text="Type" prefWidth="120" />
+                        <TableColumn fx:id="colLatestCreated" text="Créé le" prefWidth="160" />
+                    </columns>
+                </TableView>
+            </VBox>
+
+            <!-- Projects + Investments cards -->
+            <HBox spacing="14" VBox.vgrow="ALWAYS">
+
+                <!-- PROJETS -->
+                <VBox styleClass="card" spacing="12" HBox.hgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Text text="Projets" styleClass="h2"/>
+                        <Pane HBox.hgrow="ALWAYS"/>
+                        <Button text="Voir tout" styleClass="btn"/>
+                    </HBox>
+
+                    <Label text="Aperçu des projets…" styleClass="hint"/>
+                </VBox>
+
+                <!-- INVESTISSEMENTS -->
+                <VBox styleClass="card" spacing="12" HBox.hgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Text text="Investissements" styleClass="h2"/>
+                        <Pane HBox.hgrow="ALWAYS"/>
+                        <Button text="Voir tout" styleClass="btn"/>
+                    </HBox>
+
+                    <Label text="Aperçu des investissements…" styleClass="hint"/>
+                </VBox>
+
+            </HBox>
+        </VBox>
+    </center>
+
+</BorderPane>

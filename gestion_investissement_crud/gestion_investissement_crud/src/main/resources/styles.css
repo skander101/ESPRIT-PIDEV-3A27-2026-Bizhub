@@ -1,0 +1,106 @@
+/* Styles pour CRUD Investissement avec IA */
+
+.root {
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+}
+
+/* Boutons */
+.button {
+    -fx-background-radius: 5;
+    -fx-padding: 8 15;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+/* ListView */
+.list-view {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+}
+
+.list-cell {
+    -fx-padding: 10;
+    -fx-border-color: #f0f0f0;
+    -fx-border-width: 0 0 1 0;
+}
+
+.list-cell:hover {
+    -fx-background-color: #f5f5f5;
+}
+
+/* ComboBox */
+.combo-box {
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+}
+
+/* TextField */
+.text-field {
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+    -fx-border-color: #e0e0e0;
+}
+
+/* TextArea */
+.text-area {
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+    -fx-border-color: #e0e0e0;
+}
+
+/* TabPane */
+.tab-pane {
+    -fx-background-color: transparent;
+}
+
+.tab {
+    -fx-background-color: #e0e0e0;
+    -fx-background-radius: 5 5 0 0;
+    -fx-padding: 10 20;
+}
+
+.tab:selected {
+    -fx-background-color: #2196f3;
+    -fx-text-fill: white;
+}
+
+/* Labels */
+.label-title {
+    -fx-font-size: 18;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+}
+
+.label-subtitle {
+    -fx-font-size: 14;
+    -fx-text-fill: #666;
+}
+
+/* Status indicators */
+.status-active {
+    -fx-background-color: #4caf50;
+    -fx-text-fill: white;
+    -fx-padding: 5 10;
+    -fx-background-radius: 10;
+}
+
+.status-warning {
+    -fx-background-color: #ff9800;
+    -fx-text-fill: white;
+    -fx-padding: 5 10;
+    -fx-background-radius: 10;
+}
+
+.status-error {
+    -fx-background-color: #f44336;
+    -fx-text-fill: white;
+    -fx-padding: 5 10;
+    -fx-background-radius: 10;
+}
