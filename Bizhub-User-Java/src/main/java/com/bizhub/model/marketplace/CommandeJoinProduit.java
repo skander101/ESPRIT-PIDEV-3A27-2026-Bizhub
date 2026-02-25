@@ -1,91 +1,82 @@
 package com.bizhub.model.marketplace;
 
-import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 public class CommandeJoinProduit {
 
-    // ── Champs commande ──────────────────────────────────
-    private int    idCommande;
-    private int    idClient;
-    private int    idProduit;
-    private int    quantiteCommande;
+    // ===== Base commande =====
+    private int idCommande;
+    private int idClient;
+    private int idProduit;
+    private int quantiteCommande;
     private String statut;
-    private java.util.Date dateCommande;
+    private String produitNom;
+    private LocalDateTime dateCommande;
 
-    // ── Champs produit (jointure) ────────────────────────
-    private String     produitNom;
-    private BigDecimal prix;          // ← mappé depuis la requête SQL JOIN
-
-    // ── Priority Engine ──────────────────────────────────
-    private int    priorityScore;
-    private String priorityLabel;
-    private boolean autoConfirmRecommended;
-    private String  autoReason;
-
-    // ── Paiement Stripe ──────────────────────────────────
-    private String paymentStatus;
+    // ===== Paiement =====
+    private String paymentStatus;  // non_initie, en_cours, paid, failed...
     private String paymentRef;
     private String paymentUrl;
+    private boolean estPayee;
+    private LocalDateTime paidAt;
+
+    // ===== IA Priorité (utilisée par ProduitServiceController) =====
+    private int priorityScore;                 // ex 0..500
+    private String priorityLabel;              // "HAUTE", "MOYENNE", "BASSE"
+    private boolean autoConfirmRecommended;    // true/false
+    private String autoReason;                 // texte explicatif
 
     // =====================================================
-    // GETTERS / SETTERS — Commande
+    // GETTERS / SETTERS
     // =====================================================
-    public int    getIdCommande()       { return idCommande; }
-    public void   setIdCommande(int v)  { this.idCommande = v; }
 
-    public int    getIdClient()         { return idClient; }
-    public void   setIdClient(int v)    { this.idClient = v; }
+    public int getIdCommande() { return idCommande; }
+    public void setIdCommande(int idCommande) { this.idCommande = idCommande; }
 
-    public int    getIdProduit()        { return idProduit; }
-    public void   setIdProduit(int v)   { this.idProduit = v; }
+    public int getIdClient() { return idClient; }
+    public void setIdClient(int idClient) { this.idClient = idClient; }
 
-    public int    getQuantiteCommande()      { return quantiteCommande; }
-    public void   setQuantiteCommande(int v) { this.quantiteCommande = v; }
+    public int getIdProduit() { return idProduit; }
+    public void setIdProduit(int idProduit) { this.idProduit = idProduit; }
 
-    public String getStatut()           { return statut; }
-    public void   setStatut(String v)   { this.statut = v; }
+    public int getQuantiteCommande() { return quantiteCommande; }
+    public void setQuantiteCommande(int quantiteCommande) { this.quantiteCommande = quantiteCommande; }
 
-    public java.util.Date getDateCommande()          { return dateCommande; }
-    public void           setDateCommande(java.util.Date v) { this.dateCommande = v; }
+    public String getStatut() { return statut; }
+    public void setStatut(String statut) { this.statut = statut; }
 
-    // =====================================================
-    // GETTERS / SETTERS — Produit (jointure SQL)
-    // =====================================================
-    public String getProduitNom()          { return produitNom; }
-    public void   setProduitNom(String v)  { this.produitNom = v; }
+    public String getProduitNom() { return produitNom; }
+    public void setProduitNom(String produitNom) { this.produitNom = produitNom; }
 
-    /**
-     * Prix unitaire du produit lié à la commande.
-     * Mappé depuis la colonne p.prix dans la requête SQL JOIN.
-     * Utilisé par PaymentService pour calculer le montant Stripe.
-     */
-    public BigDecimal getPrix()          { return prix; }
-    public void       setPrix(BigDecimal v) { this.prix = v; }
+    public LocalDateTime getDateCommande() { return dateCommande; }
+    public void setDateCommande(LocalDateTime dateCommande) { this.dateCommande = dateCommande; }
 
-    // =====================================================
-    // GETTERS / SETTERS — Priority Engine
-    // =====================================================
-    public int     getPriorityScore()        { return priorityScore; }
-    public void    setPriorityScore(int v)   { this.priorityScore = v; }
+    // ===== Paiement =====
+    public String getPaymentStatus() { return paymentStatus; }
+    public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
 
-    public String  getPriorityLabel()        { return priorityLabel; }
-    public void    setPriorityLabel(String v){ this.priorityLabel = v; }
+    public String getPaymentRef() { return paymentRef; }
+    public void setPaymentRef(String paymentRef) { this.paymentRef = paymentRef; }
 
-    public boolean isAutoConfirmRecommended()       { return autoConfirmRecommended; }
-    public void    setAutoConfirmRecommended(boolean v) { this.autoConfirmRecommended = v; }
+    public String getPaymentUrl() { return paymentUrl; }
+    public void setPaymentUrl(String paymentUrl) { this.paymentUrl = paymentUrl; }
 
-    public String  getAutoReason()           { return autoReason; }
-    public void    setAutoReason(String v)   { this.autoReason = v; }
+    public boolean isEstPayee() { return estPayee; }
+    public void setEstPayee(boolean estPayee) { this.estPayee = estPayee; }
 
-    // =====================================================
-    // GETTERS / SETTERS — Paiement Stripe
-    // =====================================================
-    public String getPaymentStatus()         { return paymentStatus; }
-    public void   setPaymentStatus(String v) { this.paymentStatus = v; }
+    public LocalDateTime getPaidAt() { return paidAt; }
+    public void setPaidAt(LocalDateTime paidAt) { this.paidAt = paidAt; }
 
-    public String getPaymentRef()            { return paymentRef; }
-    public void   setPaymentRef(String v)    { this.paymentRef = v; }
+    // ===== IA Priorité =====
+    public int getPriorityScore() { return priorityScore; }
+    public void setPriorityScore(int priorityScore) { this.priorityScore = priorityScore; }
 
-    public String getPaymentUrl()            { return paymentUrl; }
-    public void   setPaymentUrl(String v)    { this.paymentUrl = v; }
+    public String getPriorityLabel() { return priorityLabel; }
+    public void setPriorityLabel(String priorityLabel) { this.priorityLabel = priorityLabel; }
+
+    public boolean isAutoConfirmRecommended() { return autoConfirmRecommended; }
+    public void setAutoConfirmRecommended(boolean autoConfirmRecommended) { this.autoConfirmRecommended = autoConfirmRecommended; }
+
+    public String getAutoReason() { return autoReason; }
+    public void setAutoReason(String autoReason) { this.autoReason = autoReason; }
 }

@@ -27,6 +27,8 @@ import javafx.scene.layout.VBox;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -37,15 +39,12 @@ import java.util.logging.Logger;
 /**
  * ProduitServiceController
  *
- * ✅ Fix principaux :
- * - Stripe NE S'OUVRE PAS côté investisseur (auto-confirm + confirmer)
- * - onConfirmerCommande() nettoyé (plus de variable result fantôme)
- * - en auto-confirm : on génère URL Stripe (initiateStripeCheckout) et on save, sans ouvrir navigateur
- *
- * IMPORTANT :
- * - PaymentService doit exposer : PaymentResult initiateStripeCheckout(CommandeJoinProduit c)
- *   (ça crée session + retourne url, SANS ouvrir navigateur)
- * - PaymentResult doit exposer : getRef(), getPaymentUrl()
+ * ✅ Corrections apportées :
+ * - colCmdPaymentStatus et colCmdPayee branchés dans initialize()
+ * - colCmdPaidAt (date paiement) branché dans initialize()
+ * - Stripe NE S'OUVRE PAS côté investisseur
+ * - onConfirmerCommande() : confirme + génère URL Stripe sans ouvrir navigateur
+ * - Auto-confirm : même comportement
  */
 public class ProduitServiceController {
 
@@ -55,7 +54,7 @@ public class ProduitServiceController {
     private static final String STATUT_ATTENTE   = "en_attente";
     private static final String STATUT_CONFIRMEE = "confirmee";
     private static final String STATUT_LIVREE    = "livree";
-    private static final String STATUT_ANNULEE   = "annulee";
+    private static final String STATUT_ANNULEE   = "annule";
 
     // ── Bordures inline ───────────────────────────────────────
     private static final String BORDER_OK  = "-fx-border-color:#10B981;-fx-border-width:2;-fx-border-radius:12;";
@@ -63,29 +62,31 @@ public class ProduitServiceController {
     private static final String BORDER_DEF = "";
 
     // ── Webhook + Auto-confirm ────────────────────────────────
-    private static final String DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/XXXX/YYY";
-    private static final boolean AUTO_CONFIRM_ENABLED = true;
-    private static final int AUTO_CONFIRM_THRESHOLD = 350;
-    private static final int MAX_AUTO_CONFIRM_PER_REFRESH = 3;
+    private static final String DISCORD_WEBHOOK_URL        = "https://discord.com/api/webhooks/XXXX/YYY";
+    private static final boolean AUTO_CONFIRM_ENABLED      = true;
+    private static final int AUTO_CONFIRM_THRESHOLD        = 350;
+    private static final int MAX_AUTO_CONFIRM_PER_REFRESH  = 3;
+
+    private static final DateTimeFormatter DATE_FMT =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     // ── Services / Repos ──────────────────────────────────────
-    private final ProduitServiceRepository repo = new ProduitServiceRepository();
-    private final CommandeRepository commandeRepo = new CommandeRepository();
+    private final ProduitServiceRepository repo         = new ProduitServiceRepository();
+    private final CommandeRepository       commandeRepo = new CommandeRepository();
 
-    private final CommandePriorityEngine priorityEngine = new CommandePriorityEngine();
-    private final CommandeNotificationService notifService =
+    private final CommandePriorityEngine       priorityEngine = new CommandePriorityEngine();
+    private final CommandeNotificationService  notifService   =
             new CommandeNotificationService(DISCORD_WEBHOOK_URL);
-
-    private final PaymentService paymentService = new PaymentService();
+    private final PaymentService               paymentService = new PaymentService();
 
     // ── Data ──────────────────────────────────────────────────
-    private final ObservableList<ProduitService> produitsData = FXCollections.observableArrayList();
+    private final ObservableList<ProduitService>      produitsData  = FXCollections.observableArrayList();
     private final ObservableList<CommandeJoinProduit> commandesData = FXCollections.observableArrayList();
 
     private ProduitService selected;
 
     // ── FXML Filtres ──────────────────────────────────────────
-    @FXML private TextField tfSearchNom;
+    @FXML private TextField       tfSearchNom;
     @FXML private ComboBox<String> cbFilterCategorie;
 
     // ── FXML KPI ──────────────────────────────────────────────
@@ -94,13 +95,13 @@ public class ProduitServiceController {
     @FXML private javafx.scene.text.Text kpiCategories;
 
     // ── FXML Formulaire produit ───────────────────────────────
-    @FXML private TextField tfIdProfile;
-    @FXML private TextField tfNom;
-    @FXML private TextField tfPrix;
-    @FXML private TextField tfQuantite;
-    @FXML private TextField tfCategorie;
-    @FXML private CheckBox cbDisponible;
-    @FXML private TextArea taDescription;
+    @FXML private TextField  tfIdProfile;
+    @FXML private TextField  tfNom;
+    @FXML private TextField  tfPrix;
+    @FXML private TextField  tfQuantite;
+    @FXML private TextField  tfCategorie;
+    @FXML private CheckBox   cbDisponible;
+    @FXML private TextArea   taDescription;
 
     @FXML private Button btnAjouter;
     @FXML private Button btnModifier;
@@ -108,64 +109,69 @@ public class ProduitServiceController {
     @FXML private Button btnVider;
 
     // ── FXML Messages validation inline (produit) ─────────────
-    @FXML private HBox hboxValIdProfile;
+    @FXML private HBox  hboxValIdProfile;
     @FXML private Label iconValIdProfile;
     @FXML private Label lblValIdProfile;
 
-    @FXML private HBox hboxValNom;
+    @FXML private HBox  hboxValNom;
     @FXML private Label iconValNom;
     @FXML private Label lblValNom;
 
-    @FXML private HBox hboxValPrix;
+    @FXML private HBox  hboxValPrix;
     @FXML private Label iconValPrix;
     @FXML private Label lblValPrix;
 
-    @FXML private HBox hboxValQuantite;
+    @FXML private HBox  hboxValQuantite;
     @FXML private Label iconValQuantite;
     @FXML private Label lblValQuantite;
 
-    @FXML private HBox hboxValCategorie;
+    @FXML private HBox  hboxValCategorie;
     @FXML private Label iconValCategorie;
     @FXML private Label lblValCategorie;
 
-    @FXML private HBox hboxMsgCrud;
+    @FXML private HBox  hboxMsgCrud;
     @FXML private Label iconMsgCrud;
     @FXML private Label lblMsgCrud;
 
     // ── FXML Table produits ───────────────────────────────────
-    @FXML private TableView<ProduitService> tableProduits;
-    @FXML private TableColumn<ProduitService, Integer> colId;
-    @FXML private TableColumn<ProduitService, String> colNom;
-    @FXML private TableColumn<ProduitService, String> colCategorie;
-    @FXML private TableColumn<ProduitService, Integer> colQuantite;
+    @FXML private TableView<ProduitService>          tableProduits;
+    @FXML private TableColumn<ProduitService, Integer>    colId;
+    @FXML private TableColumn<ProduitService, String>     colNom;
+    @FXML private TableColumn<ProduitService, String>     colCategorie;
+    @FXML private TableColumn<ProduitService, Integer>    colQuantite;
     @FXML private TableColumn<ProduitService, BigDecimal> colPrix;
-    @FXML private TableColumn<ProduitService, Boolean> colDisponible;
+    @FXML private TableColumn<ProduitService, Boolean>    colDisponible;
 
     // ── FXML Section commandes investisseur ───────────────────
-    @FXML private VBox boxCommandesInvestor;
+    @FXML private VBox  boxCommandesInvestor;
 
-    @FXML private HBox hboxCmdInfo;
+    @FXML private HBox  hboxCmdInfo;
     @FXML private Label lblCmdInfo;
 
-    @FXML private TableView<CommandeJoinProduit> tableCommandes;
-    @FXML private TableColumn<CommandeJoinProduit, Integer> colCmdId;
-    @FXML private TableColumn<CommandeJoinProduit, Integer> colCmdClient;
-    @FXML private TableColumn<CommandeJoinProduit, String> colCmdProduit;
-    @FXML private TableColumn<CommandeJoinProduit, Integer> colCmdQte;
-    @FXML private TableColumn<CommandeJoinProduit, String> colCmdStatut;
+    @FXML private TableView<CommandeJoinProduit>              tableCommandes;
+    @FXML private TableColumn<CommandeJoinProduit, Integer>   colCmdId;
+    @FXML private TableColumn<CommandeJoinProduit, Integer>   colCmdClient;
+    @FXML private TableColumn<CommandeJoinProduit, String>    colCmdProduit;
+    @FXML private TableColumn<CommandeJoinProduit, Integer>   colCmdQte;
+    @FXML private TableColumn<CommandeJoinProduit, String>    colCmdStatut;
 
     // ✅ Colonnes priorité
-    @FXML private TableColumn<CommandeJoinProduit, String> colCmdPriorite;
+    @FXML private TableColumn<CommandeJoinProduit, String>  colCmdPriorite;
     @FXML private TableColumn<CommandeJoinProduit, Integer> colCmdScore;
+
+    // ✅ Colonnes paiement (investisseur)
+    @FXML private TableColumn<CommandeJoinProduit, String>        colCmdPaymentStatus;
+    @FXML private TableColumn<CommandeJoinProduit, Boolean>       colCmdPayee;
+    @FXML private TableColumn<CommandeJoinProduit, LocalDateTime> colCmdPaidAt;
 
     @FXML private Button btnConfirmerCmd;
     @FXML private Button btnAnnulerCmd;
 
-    @FXML private HBox hboxMsgCmd;
+    @FXML private HBox  hboxMsgCmd;
     @FXML private Label iconMsgCmd;
     @FXML private Label lblMsgCmd;
 
-    // ====== FUN UI popover priorité ======
+    // ── Popover priorité ──────────────────────────────────────
     private javafx.stage.Popup priorityPopup;
 
     // =====================================================
@@ -174,30 +180,114 @@ public class ProduitServiceController {
     @FXML
     public void initialize() {
 
-        // ✅ Table produits
-        if (colId != null)         colId.setCellValueFactory(new PropertyValueFactory<>("idProduit"));
-        if (colNom != null)        colNom.setCellValueFactory(new PropertyValueFactory<>("nom"));
-        if (colCategorie != null)  colCategorie.setCellValueFactory(new PropertyValueFactory<>("categorie"));
-        if (colQuantite != null)   colQuantite.setCellValueFactory(new PropertyValueFactory<>("quantite"));
-        if (colPrix != null)       colPrix.setCellValueFactory(new PropertyValueFactory<>("prix"));
-        if (colDisponible != null) colDisponible.setCellValueFactory(new PropertyValueFactory<>("disponible"));
-        if (tableProduits != null) tableProduits.setItems(produitsData);
+        // ── Table produits ────────────────────────────────────
+        if (colId        != null) colId.setCellValueFactory(new PropertyValueFactory<>("idProduit"));
+        if (colNom       != null) colNom.setCellValueFactory(new PropertyValueFactory<>("nom"));
+        if (colCategorie != null) colCategorie.setCellValueFactory(new PropertyValueFactory<>("categorie"));
+        if (colQuantite  != null) colQuantite.setCellValueFactory(new PropertyValueFactory<>("quantite"));
+        if (colPrix      != null) colPrix.setCellValueFactory(new PropertyValueFactory<>("prix"));
+        if (colDisponible!= null) colDisponible.setCellValueFactory(new PropertyValueFactory<>("disponible"));
+        if (tableProduits!= null) tableProduits.setItems(produitsData);
 
         if (tableProduits != null) {
             tableProduits.getSelectionModel().selectedItemProperty()
                     .addListener((obs, o, n) -> { selected = n; if (n != null) fillForm(n); });
         }
 
-        // ✅ Table commandes (investisseur)
+        // ── Table commandes investisseur ──────────────────────
         if (tableCommandes != null) {
-            if (colCmdId != null)      colCmdId.setCellValueFactory(new PropertyValueFactory<>("idCommande"));
-            if (colCmdClient != null)  colCmdClient.setCellValueFactory(new PropertyValueFactory<>("idClient"));
-            if (colCmdProduit != null) colCmdProduit.setCellValueFactory(new PropertyValueFactory<>("produitNom"));
-            if (colCmdQte != null)     colCmdQte.setCellValueFactory(new PropertyValueFactory<>("quantiteCommande"));
-            if (colCmdStatut != null)  colCmdStatut.setCellValueFactory(new PropertyValueFactory<>("statut"));
+            if (colCmdId     != null) colCmdId.setCellValueFactory(new PropertyValueFactory<>("idCommande"));
+            if (colCmdClient != null) colCmdClient.setCellValueFactory(new PropertyValueFactory<>("idClient"));
+            if (colCmdProduit!= null) colCmdProduit.setCellValueFactory(new PropertyValueFactory<>("produitNom"));
+            if (colCmdQte    != null) colCmdQte.setCellValueFactory(new PropertyValueFactory<>("quantiteCommande"));
+            if (colCmdStatut != null) colCmdStatut.setCellValueFactory(new PropertyValueFactory<>("statut"));
+            if (colCmdPriorite!= null) colCmdPriorite.setCellValueFactory(new PropertyValueFactory<>("priorityLabel"));
+            if (colCmdScore  != null) colCmdScore.setCellValueFactory(new PropertyValueFactory<>("priorityScore"));
 
-            if (colCmdPriorite != null) colCmdPriorite.setCellValueFactory(new PropertyValueFactory<>("priorityLabel"));
-            if (colCmdScore != null)    colCmdScore.setCellValueFactory(new PropertyValueFactory<>("priorityScore"));
+            // ✅ Colonnes paiement — branchées ici
+            if (colCmdPaymentStatus != null) {
+                colCmdPaymentStatus.setCellValueFactory(new PropertyValueFactory<>("paymentStatus"));
+                colCmdPaymentStatus.setCellFactory(col -> new TableCell<>() {
+                    private final Label badge = new Label();
+                    {
+                        badge.setStyle("-fx-padding:4 10; -fx-font-weight:800;"
+                                + "-fx-background-radius:999; -fx-border-radius:999;"
+                                + "-fx-border-width:1; -fx-font-size:11px;");
+                    }
+                    @Override protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty) { setGraphic(null); return; }
+                        String s = (item == null ? "" : item.trim().toLowerCase(Locale.ROOT));
+                        String base = "-fx-padding:4 10; -fx-font-weight:800;"
+                                + "-fx-background-radius:999; -fx-border-radius:999;"
+                                + "-fx-border-width:1; -fx-font-size:11px;";
+                        if (s.isBlank() || "non_initie".equals(s)) {
+                            badge.setText("⏳ non initié");
+                            badge.setStyle(base
+                                    + "-fx-background-color:rgba(245,158,11,0.18);"
+                                    + "-fx-text-fill:#FCD34D;"
+                                    + "-fx-border-color:rgba(245,158,11,0.55);");
+                        } else if ("en_cours".equals(s)) {
+                            badge.setText("💳 en cours");
+                            badge.setStyle(base
+                                    + "-fx-background-color:rgba(59,130,246,0.18);"
+                                    + "-fx-text-fill:#93C5FD;"
+                                    + "-fx-border-color:rgba(59,130,246,0.55);");
+                        } else if ("paid".equals(s) || "paye".equals(s)) {
+                            badge.setText("✅ payé");
+                            badge.setStyle(base
+                                    + "-fx-background-color:rgba(16,185,129,0.18);"
+                                    + "-fx-text-fill:#6EE7B7;"
+                                    + "-fx-border-color:rgba(16,185,129,0.55);");
+                        } else if ("failed".equals(s) || "echec".equals(s)) {
+                            badge.setText("⚠ échec");
+                            badge.setStyle(base
+                                    + "-fx-background-color:rgba(239,68,68,0.18);"
+                                    + "-fx-text-fill:#FCA5A5;"
+                                    + "-fx-border-color:rgba(239,68,68,0.55);");
+                        } else {
+                            badge.setText(item == null ? "" : item);
+                            badge.setStyle(base);
+                        }
+                        setGraphic(badge);
+                    }
+                });
+            }
+
+            // ✅ Colonne est_payee
+            if (colCmdPayee != null) {
+                colCmdPayee.setCellValueFactory(new PropertyValueFactory<>("estPayee"));
+                colCmdPayee.setCellFactory(col -> new TableCell<>() {
+                    @Override protected void updateItem(Boolean v, boolean empty) {
+                        super.updateItem(v, empty);
+                        if (empty || v == null) { setText(null); setStyle(""); return; }
+                        if (v) {
+                            setText("✅ Payée");
+                            setStyle("-fx-text-fill:#6EE7B7; -fx-font-weight:800;");
+                        } else {
+                            setText("⏳ Impayée");
+                            setStyle("-fx-text-fill:#FCD34D; -fx-font-weight:800;");
+                        }
+                    }
+                });
+            }
+
+            // ✅ Colonne paid_at (date/heure du paiement)
+            if (colCmdPaidAt != null) {
+                colCmdPaidAt.setCellValueFactory(new PropertyValueFactory<>("paidAt"));
+                colCmdPaidAt.setCellFactory(col -> new TableCell<>() {
+                    @Override protected void updateItem(LocalDateTime dt, boolean empty) {
+                        super.updateItem(dt, empty);
+                        if (empty || dt == null) {
+                            setText("—");
+                            setStyle("-fx-text-fill:#6B7280;");
+                        } else {
+                            setText(dt.format(DATE_FMT));
+                            setStyle("-fx-text-fill:#6EE7B7; -fx-font-weight:700;");
+                        }
+                    }
+                });
+            }
 
             hideColumn(colCmdId);
             hideColumn(colCmdClient);
@@ -213,13 +303,11 @@ public class ProduitServiceController {
                     .addListener((obs, o, sel) -> onCmdSelectionChanged(sel));
         }
 
-        // ✅ Rôle
-        String role = getCurrentRole();
+        // ── Rôle ─────────────────────────────────────────────
+        String role          = getCurrentRole();
         boolean isInvestisseur = role.contains("invest");
 
         setVM(boxCommandesInvestor, isInvestisseur);
-
-        // CRUD produits : investisseur ou fournisseur
         boolean canCrud = isInvestisseur || role.contains("fournisseur");
         setProductsCrudEnabled(canCrud);
 
@@ -227,7 +315,7 @@ public class ProduitServiceController {
         attachRealTimeValidation();
 
         // Filtres produits
-        if (tfSearchNom != null) tfSearchNom.textProperty().addListener((obs, o, n) -> applyFilters());
+        if (tfSearchNom       != null) tfSearchNom.textProperty().addListener((obs, o, n) -> applyFilters());
         if (cbFilterCategorie != null) cbFilterCategorie.valueProperty().addListener((obs, o, n) -> applyFilters());
 
         refreshProduits();
@@ -245,15 +333,15 @@ public class ProduitServiceController {
 
             int ownerId = me.getUserId();
 
-            // 1) Charger commandes reçues
+            // 1) Charger commandes reçues sur SES produits
             commandesData.setAll(commandeRepo.findByOwnerJoinProduit(ownerId));
 
-            // 2) Appliquer moteur IA
+            // 2) Moteur IA priorité
             for (CommandeJoinProduit c : commandesData) {
                 priorityEngine.apply(c);
             }
 
-            // 3) AUTO-CONFIRM (⚠️ sans ouvrir Stripe)
+            // 3) AUTO-CONFIRM (sans ouvrir Stripe)
             if (AUTO_CONFIRM_ENABLED) {
                 int done = 0;
 
@@ -261,14 +349,15 @@ public class ProduitServiceController {
                     if (done >= MAX_AUTO_CONFIRM_PER_REFRESH) break;
 
                     boolean enAttente = STATUT_ATTENTE.equalsIgnoreCase(safe(c.getStatut()));
-                    boolean rec = c.isAutoConfirmRecommended();
-                    int score = c.getPriorityScore();
+                    boolean rec       = c.isAutoConfirmRecommended();
+                    int     score     = c.getPriorityScore();
 
                     if (enAttente && rec && score >= AUTO_CONFIRM_THRESHOLD) {
-                        int updated = commandeRepo.updateStatutIfEnAttente(c.getIdCommande(), STATUT_CONFIRMEE);
+                        int updated = commandeRepo.updateStatutIfEnAttente(
+                                c.getIdCommande(), STATUT_CONFIRMEE);
 
                         if (updated == 1) {
-                            // ✅ créer URL Stripe SANS ouvrir
+                            // Génère URL Stripe SANS ouvrir le navigateur
                             PaymentResult pay = paymentService.initiateStripeCheckout(c);
 
                             if (pay.isSuccess()) {
@@ -278,13 +367,16 @@ public class ProduitServiceController {
                                         pay.getPaymentUrl()
                                 );
                             } else {
-                                LOGGER.warning("Auto-confirm Stripe FAIL: " + safe(pay.getErrorMessage()));
+                                LOGGER.warning("Auto-confirm Stripe FAIL #"
+                                        + c.getIdCommande() + " : " + safe(pay.getErrorMessage()));
                             }
 
                             done++;
 
-                            try { toastUtil.ai("🤖 Auto-confirm ✅\nCommande #" + c.getIdCommande() + "\nScore: " + score); }
-                            catch (Exception ignore) {}
+                            try {
+                                toastUtil.ai("🤖 Auto-confirm ✅\nCommande #"
+                                        + c.getIdCommande() + "\nScore: " + score);
+                            } catch (Exception ignore) {}
 
                             try {
                                 notifService.sendDiscord(
@@ -296,7 +388,8 @@ public class ProduitServiceController {
                                                 + "• Raison : " + safe(c.getAutoReason())
                                                 + (pay.isSuccess()
                                                 ? "\n• Paiement : lien généré ✅"
-                                                : "\n• Paiement : échec Stripe ⚠ (" + safe(pay.getErrorMessage()) + ")")
+                                                : "\n• Paiement : échec Stripe ⚠ ("
+                                                + safe(pay.getErrorMessage()) + ")")
                                 );
                             } catch (Exception ignore) {}
                         }
@@ -304,18 +397,18 @@ public class ProduitServiceController {
                 }
 
                 if (done > 0) {
+                    // Recharger après auto-confirmations
                     commandesData.setAll(commandeRepo.findByOwnerJoinProduit(ownerId));
                     for (CommandeJoinProduit c : commandesData) priorityEngine.apply(c);
 
                     showOk(hboxMsgCmd, iconMsgCmd, lblMsgCmd, null,
                             "🤖 Auto-confirmation : " + done + " commande(s) confirmée(s).");
-
-                    try { toastUtil.success("✅ " + done + " commande(s) confirmée(s) automatiquement."); }
+                    try { toastUtil.success("✅ " + done + " commande(s) auto-confirmée(s)."); }
                     catch (Exception ignore) {}
                 }
             }
 
-            // 4) Tri score desc
+            // 4) Tri score décroissant
             if (tableCommandes != null && colCmdScore != null) {
                 colCmdScore.setSortType(TableColumn.SortType.DESCENDING);
                 tableCommandes.getSortOrder().setAll(colCmdScore);
@@ -351,30 +444,33 @@ public class ProduitServiceController {
         String reason = safe(sel.getAutoReason());
 
         if (lblCmdInfo != null) {
+            String paidInfo = sel.isEstPayee()
+                    ? " | 💳 Payée le " + (sel.getPaidAt() != null
+                    ? sel.getPaidAt().format(DATE_FMT) : "?")
+                    : " | ⏳ Non payée";
+
             lblCmdInfo.setText("Commande #" + sel.getIdCommande()
                     + " | " + safe(sel.getProduitNom())
                     + " | Qté: " + sel.getQuantiteCommande()
                     + " | Statut: " + safe(sel.getStatut())
-                    + " | Priorité: " + safe(sel.getPriorityLabel()) + " (" + sel.getPriorityScore() + ")"
+                    + " | Priorité: " + safe(sel.getPriorityLabel())
+                    + " (" + sel.getPriorityScore() + ")"
+                    + paidInfo
                     + (reason.isEmpty() ? "" : "\n🤖 " + reason));
         }
         setVM(hboxCmdInfo, true);
 
         boolean editable = STATUT_ATTENTE.equalsIgnoreCase(statut);
         if (btnConfirmerCmd != null) btnConfirmerCmd.setDisable(!editable);
-        if (btnAnnulerCmd != null)   btnAnnulerCmd.setDisable(!editable);
+        if (btnAnnulerCmd   != null) btnAnnulerCmd.setDisable(!editable);
 
-        if (editable && btnConfirmerCmd != null) {
-            boolean recommended = sel.isAutoConfirmRecommended();
-            if (recommended) {
-                btnConfirmerCmd.setText("🤖 Confirmer (Recommandé)");
-                btnConfirmerCmd.setStyle(
-                        "-fx-background-radius:14; -fx-font-weight:900;"
-                                + "-fx-background-color: linear-gradient(#F59E0B,#FBBF24);"
-                                + "-fx-text-fill:#111827;"
-                                + "-fx-effect: dropshadow(gaussian, rgba(251,191,36,0.35), 18, 0.2, 0, 6);"
-                );
-            }
+        if (editable && btnConfirmerCmd != null && sel.isAutoConfirmRecommended()) {
+            btnConfirmerCmd.setText("🤖 Confirmer (Recommandé)");
+            btnConfirmerCmd.setStyle(
+                    "-fx-background-radius:14; -fx-font-weight:900;"
+                            + "-fx-background-color: linear-gradient(#F59E0B,#FBBF24);"
+                            + "-fx-text-fill:#111827;"
+                            + "-fx-effect: dropshadow(gaussian,rgba(251,191,36,0.35),18,0.2,0,6);");
             if (!reason.isEmpty()) btnConfirmerCmd.setTooltip(new Tooltip(reason));
         }
     }
@@ -401,7 +497,7 @@ public class ProduitServiceController {
             // 1) Confirmer en DB
             commandeRepo.updateStatut(sel.getIdCommande(), STATUT_CONFIRMEE);
 
-            // 2) Générer lien Stripe (SANS ouvrir)
+            // 2) Générer lien Stripe SANS ouvrir le navigateur
             PaymentResult pay = paymentService.initiateStripeCheckout(sel);
 
             if (pay.isSuccess()) {
@@ -410,21 +506,21 @@ public class ProduitServiceController {
                         pay.getRef(),
                         pay.getPaymentUrl()
                 );
-
                 showOk(hboxMsgCmd, iconMsgCmd, lblMsgCmd, null,
                         "✓ Commande #" + sel.getIdCommande() + " confirmée.\n"
-                                + "💳 Lien de paiement généré (le client pourra payer).");
-                try { toastUtil.success("✅ Confirmée : #" + sel.getIdCommande()); } catch (Exception ignore) {}
-
+                                + "💳 Lien de paiement généré — le client peut maintenant payer.");
+                try { toastUtil.success("✅ Confirmée #" + sel.getIdCommande()); }
+                catch (Exception ignore) {}
             } else {
+                // Confirmer quand même, mais signaler l'échec Stripe
                 showErr(hboxMsgCmd, iconMsgCmd, lblMsgCmd, null,
                         "✓ Commande #" + sel.getIdCommande() + " confirmée.\n"
-                                + "⚠ Stripe : " + pay.getErrorMessage()
+                                + "⚠ Stripe : " + safe(pay.getErrorMessage())
                                 + "\n(Le client ne pourra pas payer tant que Stripe échoue)");
-                try { toastUtil.error("Stripe : " + pay.getErrorMessage()); } catch (Exception ignore) {}
+                try { toastUtil.error("Stripe : " + safe(pay.getErrorMessage())); }
+                catch (Exception ignore) {}
             }
 
-            // 3) Refresh
             refreshCommandes();
 
         } catch (Exception e) {
@@ -454,7 +550,7 @@ public class ProduitServiceController {
 
         try {
             commandeRepo.updateStatut(sel.getIdCommande(), STATUT_ANNULEE);
-            try { toastUtil.error("⛔ Annulée : #" + sel.getIdCommande()); } catch (Exception ignore) {}
+            try { toastUtil.error("⛔ Annulée #" + sel.getIdCommande()); } catch (Exception ignore) {}
             refreshCommandes();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "onAnnulerCommande", e);
@@ -464,47 +560,54 @@ public class ProduitServiceController {
     }
 
     // =====================================================
-    // FUN UI — Statut badges + Hover
+    // BADGES STATUT COMMANDE
     // =====================================================
     private void setupCmdStatutBadgesInvestor() {
         if (colCmdStatut == null) return;
-
         colCmdStatut.setCellFactory(col -> new TableCell<>() {
             private final Label badge = new Label();
-            { badge.setStyle("-fx-padding:4 10; -fx-font-weight:800;"
-                    + "-fx-background-radius:999; -fx-border-radius:999; -fx-border-width:1;"
-                    + "-fx-font-size:11px;"); }
-
+            {
+                badge.setStyle("-fx-padding:4 10; -fx-font-weight:800;"
+                        + "-fx-background-radius:999; -fx-border-radius:999;"
+                        + "-fx-border-width:1; -fx-font-size:11px;");
+            }
             @Override protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) { setGraphic(null); return; }
-
                 String s = item.trim().toLowerCase(Locale.ROOT);
-                badge.setStyle("-fx-padding:4 10; -fx-font-weight:800;"
-                        + "-fx-background-radius:999; -fx-border-radius:999; -fx-border-width:1;"
-                        + "-fx-font-size:11px;");
-
+                String base = "-fx-padding:4 10; -fx-font-weight:800;"
+                        + "-fx-background-radius:999; -fx-border-radius:999;"
+                        + "-fx-border-width:1; -fx-font-size:11px;";
+                badge.setStyle(base);
                 switch (s) {
-                    case STATUT_ATTENTE -> { badge.setText("⏳ En attente");
-                        badge.setStyle(badge.getStyle()
-                                + " -fx-background-color: rgba(245,158,11,0.18);"
-                                + " -fx-text-fill:#FCD34D;"
-                                + " -fx-border-color: rgba(245,158,11,0.55);"); }
-                    case STATUT_CONFIRMEE -> { badge.setText("✅ Confirmée");
-                        badge.setStyle(badge.getStyle()
-                                + " -fx-background-color: rgba(16,185,129,0.18);"
-                                + " -fx-text-fill:#6EE7B7;"
-                                + " -fx-border-color: rgba(16,185,129,0.55);"); }
-                    case STATUT_LIVREE -> { badge.setText("📦 Livrée");
-                        badge.setStyle(badge.getStyle()
-                                + " -fx-background-color: rgba(59,130,246,0.18);"
-                                + " -fx-text-fill:#93C5FD;"
-                                + " -fx-border-color: rgba(59,130,246,0.55);"); }
-                    case STATUT_ANNULEE -> { badge.setText("⛔ Annulée");
-                        badge.setStyle(badge.getStyle()
-                                + " -fx-background-color: rgba(239,68,68,0.18);"
-                                + " -fx-text-fill:#FCA5A5;"
-                                + " -fx-border-color: rgba(239,68,68,0.55);"); }
+                    case STATUT_ATTENTE -> {
+                        badge.setText("⏳ En attente");
+                        badge.setStyle(base
+                                + "-fx-background-color:rgba(245,158,11,0.18);"
+                                + "-fx-text-fill:#FCD34D;"
+                                + "-fx-border-color:rgba(245,158,11,0.55);");
+                    }
+                    case STATUT_CONFIRMEE -> {
+                        badge.setText("✅ Confirmée");
+                        badge.setStyle(base
+                                + "-fx-background-color:rgba(16,185,129,0.18);"
+                                + "-fx-text-fill:#6EE7B7;"
+                                + "-fx-border-color:rgba(16,185,129,0.55);");
+                    }
+                    case STATUT_LIVREE -> {
+                        badge.setText("📦 Livrée");
+                        badge.setStyle(base
+                                + "-fx-background-color:rgba(59,130,246,0.18);"
+                                + "-fx-text-fill:#93C5FD;"
+                                + "-fx-border-color:rgba(59,130,246,0.55);");
+                    }
+                    case STATUT_ANNULEE -> {
+                        badge.setText("⛔ Annulée");
+                        badge.setStyle(base
+                                + "-fx-background-color:rgba(239,68,68,0.18);"
+                                + "-fx-text-fill:#FCA5A5;"
+                                + "-fx-border-color:rgba(239,68,68,0.55);");
+                    }
                     default -> badge.setText(item);
                 }
                 setGraphic(badge);
@@ -514,12 +617,11 @@ public class ProduitServiceController {
 
     private void setupCmdRowHoverGlowInvestor() {
         if (tableCommandes == null) return;
-
         tableCommandes.setRowFactory(tv -> {
             TableRow<CommandeJoinProduit> row = new TableRow<>();
             row.hoverProperty().addListener((obs, oldV, hover) -> {
                 if (row.isEmpty()) { row.setStyle(""); return; }
-                row.setStyle(hover ? "-fx-background-color: rgba(251,191,36,0.07);" : "");
+                row.setStyle(hover ? "-fx-background-color:rgba(251,191,36,0.07);" : "");
             });
             return row;
         });
@@ -529,24 +631,19 @@ public class ProduitServiceController {
         if (tableCommandes == null || colCmdPriorite == null) return;
 
         colCmdPriorite.setCellFactory(col -> new TableCell<>() {
-            private final Label badge = new Label();
-            private final Tooltip tip = new Tooltip();
-
+            private final Label   badge = new Label();
+            private final Tooltip tip   = new Tooltip();
             {
                 badge.setStyle("-fx-padding:4 10; -fx-font-weight:800; -fx-background-radius:999;"
                         + "-fx-border-radius:999; -fx-border-width:1; -fx-font-size:11px;");
                 badge.setMinWidth(90);
                 badge.setPrefWidth(110);
-
                 Tooltip.install(badge, tip);
-
                 badge.setOnMouseClicked(e -> {
                     CommandeJoinProduit c = getRowItem();
-                    if (c == null) return;
-                    showPriorityPopover(badge, c);
+                    if (c != null) showPriorityPopover(badge, c);
                 });
             }
-
             @Override protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) { setGraphic(null); setText(null); return; }
@@ -554,38 +651,37 @@ public class ProduitServiceController {
                 CommandeJoinProduit row = getRowItem();
                 int score = row != null ? row.getPriorityScore() : 0;
 
-                badge.setStyle("-fx-padding:4 10; -fx-font-weight:800; -fx-background-radius:999;"
-                        + "-fx-border-radius:999; -fx-border-width:1; -fx-font-size:11px;");
+                String base = "-fx-padding:4 10; -fx-font-weight:800; -fx-background-radius:999;"
+                        + "-fx-border-radius:999; -fx-border-width:1; -fx-font-size:11px;";
+                badge.setStyle(base);
 
-                String p = item.toUpperCase(Locale.ROOT);
-                switch (p) {
+                switch (item.toUpperCase(Locale.ROOT)) {
                     case "HAUTE" -> {
                         badge.setText("🔥 HAUTE");
-                        badge.setStyle(badge.getStyle()
-                                + " -fx-background-color: rgba(239,68,68,0.18);"
-                                + " -fx-text-fill: #FCA5A5;"
-                                + " -fx-border-color: rgba(239,68,68,0.55);");
+                        badge.setStyle(base
+                                + "-fx-background-color:rgba(239,68,68,0.18);"
+                                + "-fx-text-fill:#FCA5A5;"
+                                + "-fx-border-color:rgba(239,68,68,0.55);");
                     }
                     case "MOYENNE" -> {
                         badge.setText("⚡ MOYENNE");
-                        badge.setStyle(badge.getStyle()
-                                + " -fx-background-color: rgba(245,158,11,0.18);"
-                                + " -fx-text-fill: #FCD34D;"
-                                + " -fx-border-color: rgba(245,158,11,0.55);");
+                        badge.setStyle(base
+                                + "-fx-background-color:rgba(245,158,11,0.18);"
+                                + "-fx-text-fill:#FCD34D;"
+                                + "-fx-border-color:rgba(245,158,11,0.55);");
                     }
                     default -> {
                         badge.setText("✅ BASSE");
-                        badge.setStyle(badge.getStyle()
-                                + " -fx-background-color: rgba(16,185,129,0.18);"
-                                + " -fx-text-fill: #6EE7B7;"
-                                + " -fx-border-color: rgba(16,185,129,0.55);");
+                        badge.setStyle(base
+                                + "-fx-background-color:rgba(16,185,129,0.18);"
+                                + "-fx-text-fill:#6EE7B7;"
+                                + "-fx-border-color:rgba(16,185,129,0.55);");
                     }
                 }
 
                 String produit = row != null ? safe(row.getProduitNom()) : "";
                 String statut  = row != null ? safe(row.getStatut()) : "";
-                int qte        = row != null ? row.getQuantiteCommande() : 0;
-
+                int    qte     = row != null ? row.getQuantiteCommande() : 0;
                 tip.setText("Produit : " + produit
                         + "\nQté : " + qte
                         + "\nStatut : " + statut
@@ -595,7 +691,6 @@ public class ProduitServiceController {
                 setGraphic(badge);
                 setText(null);
             }
-
             private CommandeJoinProduit getRowItem() {
                 return getTableRow() == null ? null : (CommandeJoinProduit) getTableRow().getItem();
             }
@@ -603,28 +698,24 @@ public class ProduitServiceController {
 
         if (colCmdScore != null) {
             colCmdScore.setCellFactory(col -> new TableCell<>() {
-                private final ProgressBar bar = new ProgressBar();
-                private final Label text = new Label();
-
+                private final ProgressBar bar  = new ProgressBar();
+                private final Label       text = new Label();
                 {
                     bar.setMaxWidth(Double.MAX_VALUE);
                     bar.setPrefHeight(10);
                     text.setStyle("-fx-font-size:11px; -fx-font-weight:800; -fx-text-fill:#E5E7EB;");
                 }
-
                 @Override protected void updateItem(Integer score, boolean empty) {
                     super.updateItem(score, empty);
                     if (empty || score == null) { setGraphic(null); setText(null); return; }
-
                     double v = Math.max(0, Math.min(score, 500)) / 500.0;
                     bar.setProgress(v);
-
-                    CommandeJoinProduit row = getTableRow() == null ? null : (CommandeJoinProduit) getTableRow().getItem();
+                    CommandeJoinProduit row = getTableRow() == null
+                            ? null : (CommandeJoinProduit) getTableRow().getItem();
                     String p = row == null ? "" : safe(row.getPriorityLabel()).toUpperCase(Locale.ROOT);
-                    if ("HAUTE".equals(p)) bar.setStyle("-fx-accent: #EF4444;");
-                    else if ("MOYENNE".equals(p)) bar.setStyle("-fx-accent: #F59E0B;");
-                    else bar.setStyle("-fx-accent: #10B981;");
-
+                    if ("HAUTE".equals(p))        bar.setStyle("-fx-accent:#EF4444;");
+                    else if ("MOYENNE".equals(p)) bar.setStyle("-fx-accent:#F59E0B;");
+                    else                          bar.setStyle("-fx-accent:#10B981;");
                     text.setText(String.valueOf(score));
                     HBox box = new HBox(8, bar, text);
                     box.setAlignment(Pos.CENTER_LEFT);
@@ -640,21 +731,22 @@ public class ProduitServiceController {
         priorityPopup = new javafx.stage.Popup();
         priorityPopup.setAutoHide(true);
 
-        String p = safe(c.getPriorityLabel()).toUpperCase(Locale.ROOT);
-        int score = c.getPriorityScore();
-
         Label title = new Label("Détail Priorité");
         title.setStyle("-fx-font-size:13px; -fx-font-weight:900; -fx-text-fill:#FBBF24;");
 
-        Label l1 = new Label("• Priorité : " + p);
-        Label l2 = new Label("• Score : " + score);
+        Label l1 = new Label("• Priorité : " + safe(c.getPriorityLabel()).toUpperCase(Locale.ROOT));
+        Label l2 = new Label("• Score : " + c.getPriorityScore());
         Label l3 = new Label("• Raison : " + reasonText(c));
+        Label l4 = new Label("• Paiement : " + (c.isEstPayee()
+                ? "✅ Payée le " + (c.getPaidAt() != null ? c.getPaidAt().format(DATE_FMT) : "?")
+                : "⏳ Non payée"));
 
         l1.setStyle("-fx-text-fill:#E5E7EB; -fx-font-weight:800;");
         l2.setStyle("-fx-text-fill:#E5E7EB; -fx-font-weight:800;");
         l3.setStyle("-fx-text-fill:#93C5FD; -fx-font-weight:800;");
+        l4.setStyle("-fx-text-fill:" + (c.isEstPayee() ? "#6EE7B7" : "#FCD34D") + "; -fx-font-weight:800;");
 
-        VBox box = new VBox(6, title, l1, l2, l3);
+        VBox box = new VBox(6, title, l1, l2, l3, l4);
         box.setStyle("""
             -fx-background-color: rgba(17,24,39,0.98);
             -fx-padding: 12;
@@ -666,15 +758,15 @@ public class ProduitServiceController {
         """);
 
         priorityPopup.getContent().add(box);
-
-        var p2d = anchor.localToScreen(anchor.getBoundsInLocal().getMinX(), anchor.getBoundsInLocal().getMaxY());
+        var p2d = anchor.localToScreen(
+                anchor.getBoundsInLocal().getMinX(),
+                anchor.getBoundsInLocal().getMaxY());
         priorityPopup.show(anchor, p2d.getX(), p2d.getY() + 6);
     }
 
     private String reasonText(CommandeJoinProduit c) {
         String st = safe(c.getStatut());
-        int q = c.getQuantiteCommande();
-
+        int    q  = c.getQuantiteCommande();
         if (!STATUT_ATTENTE.equalsIgnoreCase(st)) return "Commande non-actionnable (info).";
         if (q >= 200) return "Grosse quantité → priorité max 🔥";
         if (q >= 80)  return "Quantité moyenne → important ⚡";
@@ -683,25 +775,22 @@ public class ProduitServiceController {
 
     private void setupRowPulseForHighPriority() {
         if (tableCommandes == null) return;
-
         tableCommandes.setRowFactory(tv -> new TableRow<>() {
             private Timeline pulse;
-
-            @Override
-            protected void updateItem(CommandeJoinProduit item, boolean empty) {
+            @Override protected void updateItem(CommandeJoinProduit item, boolean empty) {
                 super.updateItem(item, empty);
-
                 if (pulse != null) pulse.stop();
                 setStyle("");
-
                 if (empty || item == null) return;
-
                 if ("HAUTE".equalsIgnoreCase(safe(item.getPriorityLabel()))) {
-                    setStyle("-fx-background-color: rgba(239,68,68,0.05);");
+                    setStyle("-fx-background-color:rgba(239,68,68,0.05);");
                     pulse = new Timeline(
-                            new KeyFrame(javafx.util.Duration.ZERO, new KeyValue(opacityProperty(), 1.0)),
-                            new KeyFrame(javafx.util.Duration.seconds(0.9), new KeyValue(opacityProperty(), 0.85)),
-                            new KeyFrame(javafx.util.Duration.seconds(1.8), new KeyValue(opacityProperty(), 1.0))
+                            new KeyFrame(javafx.util.Duration.ZERO,
+                                    new KeyValue(opacityProperty(), 1.0)),
+                            new KeyFrame(javafx.util.Duration.seconds(0.9),
+                                    new KeyValue(opacityProperty(), 0.85)),
+                            new KeyFrame(javafx.util.Duration.seconds(1.8),
+                                    new KeyValue(opacityProperty(), 1.0))
                     );
                     pulse.setCycleCount(Animation.INDEFINITE);
                     pulse.play();
@@ -711,7 +800,7 @@ public class ProduitServiceController {
     }
 
     // =====================================================
-    // PRODUITS CRUD + VALIDATION
+    // PRODUITS CRUD
     // =====================================================
     @FXML
     public void onAjouter() {
@@ -784,13 +873,13 @@ public class ProduitServiceController {
         selected = null;
         resetAllCrudValidation();
         if (tableProduits != null) tableProduits.getSelectionModel().clearSelection();
-        if (tfIdProfile != null) { tfIdProfile.clear(); tfIdProfile.setStyle(BORDER_DEF); }
-        if (tfNom != null)       { tfNom.clear();       tfNom.setStyle(BORDER_DEF); }
-        if (tfPrix != null)      { tfPrix.clear();      tfPrix.setStyle(BORDER_DEF); }
-        if (tfQuantite != null)  { tfQuantite.clear();  tfQuantite.setStyle(BORDER_DEF); }
-        if (tfCategorie != null) { tfCategorie.clear(); tfCategorie.setStyle(BORDER_DEF); }
+        if (tfIdProfile   != null) { tfIdProfile.clear();   tfIdProfile.setStyle(BORDER_DEF); }
+        if (tfNom         != null) { tfNom.clear();         tfNom.setStyle(BORDER_DEF); }
+        if (tfPrix        != null) { tfPrix.clear();        tfPrix.setStyle(BORDER_DEF); }
+        if (tfQuantite    != null) { tfQuantite.clear();    tfQuantite.setStyle(BORDER_DEF); }
+        if (tfCategorie   != null) { tfCategorie.clear();   tfCategorie.setStyle(BORDER_DEF); }
         if (taDescription != null) taDescription.clear();
-        if (cbDisponible != null) cbDisponible.setSelected(true);
+        if (cbDisponible  != null) cbDisponible.setSelected(true);
     }
 
     private ProduitService readForm() {
@@ -851,13 +940,13 @@ public class ProduitServiceController {
 
     private void fillForm(ProduitService p) {
         resetAllCrudValidation();
-        if (tfIdProfile != null) tfIdProfile.setText(String.valueOf(p.getIdProfile()));
-        if (tfNom != null) tfNom.setText(nz(p.getNom()));
-        if (tfPrix != null) tfPrix.setText(p.getPrix() == null ? "" : p.getPrix().toPlainString());
-        if (tfQuantite != null) tfQuantite.setText(String.valueOf(p.getQuantite()));
-        if (tfCategorie != null) tfCategorie.setText(nz(p.getCategorie()));
+        if (tfIdProfile   != null) tfIdProfile.setText(String.valueOf(p.getIdProfile()));
+        if (tfNom         != null) tfNom.setText(nz(p.getNom()));
+        if (tfPrix        != null) tfPrix.setText(p.getPrix() == null ? "" : p.getPrix().toPlainString());
+        if (tfQuantite    != null) tfQuantite.setText(String.valueOf(p.getQuantite()));
+        if (tfCategorie   != null) tfCategorie.setText(nz(p.getCategorie()));
         if (taDescription != null) taDescription.setText(nz(p.getDescription()));
-        if (cbDisponible != null) cbDisponible.setSelected(p.isDisponible());
+        if (cbDisponible  != null) cbDisponible.setSelected(p.isDisponible());
     }
 
     // =====================================================
@@ -885,12 +974,13 @@ public class ProduitServiceController {
     }
 
     private void applyFilters() {
-        String q = tfSearchNom == null ? "" : nz(tfSearchNom.getText()).toLowerCase(Locale.ROOT);
+        String q   = tfSearchNom == null ? "" : nz(tfSearchNom.getText()).toLowerCase(Locale.ROOT);
         String cat = cbFilterCategorie == null ? "Toutes" : cbFilterCategorie.getValue();
         try {
             produitsData.setAll(repo.findAll().stream().filter(p -> {
                 boolean okNom = q.isEmpty() || nz(p.getNom()).toLowerCase(Locale.ROOT).contains(q);
-                boolean okCat = (cat == null || cat.equals("Toutes")) || nz(p.getCategorie()).equalsIgnoreCase(cat);
+                boolean okCat = (cat == null || cat.equals("Toutes"))
+                        || nz(p.getCategorie()).equalsIgnoreCase(cat);
                 return okNom && okCat;
             }).toList());
             updateKpi();
@@ -907,17 +997,16 @@ public class ProduitServiceController {
             String c = nz(p.getCategorie());
             if (!c.isBlank()) cats.add(c.toLowerCase(Locale.ROOT));
         });
-
         if (kpiTotalProduits != null) kpiTotalProduits.setText(String.valueOf(total));
-        if (kpiDisponibles != null) kpiDisponibles.setText(String.valueOf(dispo));
-        if (kpiCategories != null) kpiCategories.setText(String.valueOf(cats.size()));
+        if (kpiDisponibles   != null) kpiDisponibles.setText(String.valueOf(dispo));
+        if (kpiCategories    != null) kpiCategories.setText(String.valueOf(cats.size()));
     }
 
     private void setProductsCrudEnabled(boolean enabled) {
-        setVM(btnAjouter, enabled);
+        setVM(btnAjouter,  enabled);
         setVM(btnModifier, enabled);
-        setVM(btnSupprimer, enabled);
-        setVM(btnVider, enabled);
+        setVM(btnSupprimer,enabled);
+        setVM(btnVider,    enabled);
     }
 
     // =====================================================
@@ -926,28 +1015,40 @@ public class ProduitServiceController {
     private void attachRealTimeValidation() {
         if (tfIdProfile != null)
             tfIdProfile.textProperty().addListener((obs, o, n) -> {
-                if (n == null || n.isBlank()) { resetMsg(hboxValIdProfile, iconValIdProfile, lblValIdProfile); tfIdProfile.setStyle(BORDER_DEF); return; }
+                if (n == null || n.isBlank()) {
+                    resetMsg(hboxValIdProfile, iconValIdProfile, lblValIdProfile);
+                    tfIdProfile.setStyle(BORDER_DEF); return;
+                }
                 if (!n.trim().matches("\\d+") || Integer.parseInt(n.trim()) <= 0)
                     showErr(hboxValIdProfile, iconValIdProfile, lblValIdProfile, tfIdProfile, "Entier positif requis.");
-                else showOk(hboxValIdProfile, iconValIdProfile, lblValIdProfile, tfIdProfile, "Valide.");
+                else
+                    showOk(hboxValIdProfile, iconValIdProfile, lblValIdProfile, tfIdProfile, "Valide.");
             });
 
         if (tfNom != null)
             tfNom.textProperty().addListener((obs, o, n) -> {
-                if (n == null || n.isBlank()) { resetMsg(hboxValNom, iconValNom, lblValNom); tfNom.setStyle(BORDER_DEF); return; }
+                if (n == null || n.isBlank()) {
+                    resetMsg(hboxValNom, iconValNom, lblValNom);
+                    tfNom.setStyle(BORDER_DEF); return;
+                }
                 if (n.trim().isEmpty())
                     showErr(hboxValNom, iconValNom, lblValNom, tfNom, "Le nom est obligatoire.");
-                else showOk(hboxValNom, iconValNom, lblValNom, tfNom, "Valide.");
+                else
+                    showOk(hboxValNom, iconValNom, lblValNom, tfNom, "Valide.");
             });
 
         if (tfPrix != null)
             tfPrix.textProperty().addListener((obs, o, n) -> {
-                if (n == null || n.isBlank()) { resetMsg(hboxValPrix, iconValPrix, lblValPrix); tfPrix.setStyle(BORDER_DEF); return; }
+                if (n == null || n.isBlank()) {
+                    resetMsg(hboxValPrix, iconValPrix, lblValPrix);
+                    tfPrix.setStyle(BORDER_DEF); return;
+                }
                 try {
                     BigDecimal v = new BigDecimal(n.trim());
                     if (v.compareTo(BigDecimal.ZERO) <= 0)
                         showErr(hboxValPrix, iconValPrix, lblValPrix, tfPrix, "Le prix doit être > 0.");
-                    else showOk(hboxValPrix, iconValPrix, lblValPrix, tfPrix, "Valide.");
+                    else
+                        showOk(hboxValPrix, iconValPrix, lblValPrix, tfPrix, "Valide.");
                 } catch (NumberFormatException e) {
                     showErr(hboxValPrix, iconValPrix, lblValPrix, tfPrix, "Format invalide (ex: 49.90).");
                 }
@@ -955,18 +1056,26 @@ public class ProduitServiceController {
 
         if (tfQuantite != null)
             tfQuantite.textProperty().addListener((obs, o, n) -> {
-                if (n == null || n.isBlank()) { resetMsg(hboxValQuantite, iconValQuantite, lblValQuantite); tfQuantite.setStyle(BORDER_DEF); return; }
+                if (n == null || n.isBlank()) {
+                    resetMsg(hboxValQuantite, iconValQuantite, lblValQuantite);
+                    tfQuantite.setStyle(BORDER_DEF); return;
+                }
                 if (!n.trim().matches("\\d+"))
                     showErr(hboxValQuantite, iconValQuantite, lblValQuantite, tfQuantite, "Entier >= 0 requis.");
-                else showOk(hboxValQuantite, iconValQuantite, lblValQuantite, tfQuantite, "Valide.");
+                else
+                    showOk(hboxValQuantite, iconValQuantite, lblValQuantite, tfQuantite, "Valide.");
             });
 
         if (tfCategorie != null)
             tfCategorie.textProperty().addListener((obs, o, n) -> {
-                if (n == null || n.isBlank()) { resetMsg(hboxValCategorie, iconValCategorie, lblValCategorie); tfCategorie.setStyle(BORDER_DEF); return; }
+                if (n == null || n.isBlank()) {
+                    resetMsg(hboxValCategorie, iconValCategorie, lblValCategorie);
+                    tfCategorie.setStyle(BORDER_DEF); return;
+                }
                 if (n.trim().isEmpty())
                     showErr(hboxValCategorie, iconValCategorie, lblValCategorie, tfCategorie, "Catégorie obligatoire.");
-                else showOk(hboxValCategorie, iconValCategorie, lblValCategorie, tfCategorie, "Valide.");
+                else
+                    showOk(hboxValCategorie, iconValCategorie, lblValCategorie, tfCategorie, "Valide.");
             });
     }
 
@@ -988,27 +1097,27 @@ public class ProduitServiceController {
     private void applyLabelStyle(Label icon, Label lbl, String icone, String msg, String color) {
         String base = "-fx-text-fill:" + color + ";-fx-font-weight:700;";
         if (icon != null) { icon.setText(icone); icon.setStyle(base + "-fx-font-size:13px;"); }
-        if (lbl != null)  { lbl.setText(msg);   lbl.setStyle(base + "-fx-font-size:11px;"); }
+        if (lbl  != null) { lbl.setText(msg);    lbl.setStyle(base  + "-fx-font-size:11px;"); }
     }
 
     private void resetMsg(HBox hbox, Label icon, Label lbl) {
         setVM(hbox, false);
         if (icon != null) { icon.setText(""); icon.setStyle(""); }
-        if (lbl != null)  { lbl.setText("");  lbl.setStyle(""); }
+        if (lbl  != null) { lbl.setText("");  lbl.setStyle(""); }
     }
 
     private void resetAllCrudValidation() {
         resetMsg(hboxValIdProfile, iconValIdProfile, lblValIdProfile);
-        resetMsg(hboxValNom, iconValNom, lblValNom);
-        resetMsg(hboxValPrix, iconValPrix, lblValPrix);
-        resetMsg(hboxValQuantite, iconValQuantite, lblValQuantite);
+        resetMsg(hboxValNom,       iconValNom,       lblValNom);
+        resetMsg(hboxValPrix,      iconValPrix,      lblValPrix);
+        resetMsg(hboxValQuantite,  iconValQuantite,  lblValQuantite);
         resetMsg(hboxValCategorie, iconValCategorie, lblValCategorie);
-        resetMsg(hboxMsgCrud, iconMsgCrud, lblMsgCrud);
+        resetMsg(hboxMsgCrud,      iconMsgCrud,      lblMsgCrud);
 
         if (tfIdProfile != null) tfIdProfile.setStyle(BORDER_DEF);
-        if (tfNom != null) tfNom.setStyle(BORDER_DEF);
-        if (tfPrix != null) tfPrix.setStyle(BORDER_DEF);
-        if (tfQuantite != null) tfQuantite.setStyle(BORDER_DEF);
+        if (tfNom       != null) tfNom.setStyle(BORDER_DEF);
+        if (tfPrix      != null) tfPrix.setStyle(BORDER_DEF);
+        if (tfQuantite  != null) tfQuantite.setStyle(BORDER_DEF);
         if (tfCategorie != null) tfCategorie.setStyle(BORDER_DEF);
     }
 
@@ -1031,6 +1140,6 @@ public class ProduitServiceController {
         return u.getUserType().trim().toLowerCase(Locale.ROOT);
     }
 
-    private static String nz(String s) { return s == null ? "" : s.trim(); }
+    private static String nz(String s)   { return s == null ? "" : s.trim(); }
     private static String safe(String s) { return s == null ? "" : s.trim(); }
 }

@@ -25,7 +25,10 @@ public class CommandeRepository {
 
         if (c.getStatut() == null || c.getStatut().isBlank()) c.setStatut("en_attente");
 
-        String sql = "INSERT INTO commande (id_client, id_produit, quantite, statut) VALUES (?, ?, ?, ?)";
+        // ✅ initialise paiement + date_commande
+        String sql =
+                "INSERT INTO commande (id_client, id_produit, quantite, statut, date_commande, payment_status, est_payee) " +
+                        "VALUES (?, ?, ?, ?, NOW(), 'non_initie', 0)";
 
         try (PreparedStatement ps = cnx.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, c.getIdClient());
@@ -64,7 +67,7 @@ public class CommandeRepository {
         try (PreparedStatement ps = cnx.prepareStatement(sql)) {
             ps.setString(1, nouveauStatut);
             ps.setInt(2, idCommande);
-            return ps.executeUpdate(); // 1 si changé, 0 sinon
+            return ps.executeUpdate();
         }
     }
 
@@ -82,10 +85,10 @@ public class CommandeRepository {
     }
 
     // =====================================================
-    // FIND ALL (Commande)
+    // FIND ALL (Commande) — sans paiement (car ton model Commande ne l'a pas)
     // =====================================================
     public List<Commande> findAll() throws SQLException {
-        String sql = "SELECT * FROM commande ORDER BY id_commande DESC";
+        String sql = "SELECT id_commande, id_client, id_produit, quantite, statut, date_commande FROM commande ORDER BY id_commande DESC";
         List<Commande> list = new ArrayList<>();
 
         try (PreparedStatement ps = cnx.prepareStatement(sql);
@@ -103,6 +106,7 @@ public class CommandeRepository {
                 "SELECT c.id_commande, c.id_client, c.id_produit, " +
                         "       c.quantite AS quantite_commande, c.statut, " +
                         "       c.payment_status, c.payment_ref, c.payment_url, " +
+                        "       c.est_payee, c.paid_at, c.date_commande, " +
                         "       p.nom AS produit_nom " +
                         "FROM commande c " +
                         "JOIN produit_service p ON p.id_produit = c.id_produit " +
@@ -127,6 +131,7 @@ public class CommandeRepository {
                 "SELECT c.id_commande, c.id_client, c.id_produit, " +
                         "       c.quantite AS quantite_commande, c.statut, " +
                         "       c.payment_status, c.payment_ref, c.payment_url, " +
+                        "       c.est_payee, c.paid_at, c.date_commande, " +
                         "       p.nom AS produit_nom " +
                         "FROM commande c " +
                         "JOIN produit_service p ON p.id_produit = c.id_produit " +
@@ -137,7 +142,6 @@ public class CommandeRepository {
 
         try (PreparedStatement ps = cnx.prepareStatement(sql)) {
             ps.setInt(1, idClient);
-
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(mapJoin(rs));
             }
@@ -155,6 +159,7 @@ public class CommandeRepository {
                 "SELECT c.id_commande, c.id_client, c.id_produit, " +
                         "       c.quantite AS quantite_commande, c.statut, " +
                         "       c.payment_status, c.payment_ref, c.payment_url, " +
+                        "       c.est_payee, c.paid_at, c.date_commande, " +
                         "       p.nom AS produit_nom " +
                         "FROM commande c " +
                         "JOIN produit_service p ON p.id_produit = c.id_produit " +
@@ -165,18 +170,15 @@ public class CommandeRepository {
 
         try (PreparedStatement ps = cnx.prepareStatement(sql)) {
             ps.setInt(1, ownerId);
-
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    list.add(mapJoin(rs)); // mapJoin inclut payment_*
-                }
+                while (rs.next()) list.add(mapJoin(rs));
             }
         }
         return list;
     }
 
     // =====================================================
-    // PAYMENT INIT (atomic)
+    // PAYMENT INIT (atomic): créer/refuser si déjà initié
     // =====================================================
     public int setPaymentInitiatedIfNull(int idCommande, String ref, String url) throws SQLException {
         if (idCommande <= 0) throw new IllegalArgumentException("Id commande invalide");
@@ -192,59 +194,38 @@ public class CommandeRepository {
             ps.setString(1, ref);
             ps.setString(2, url);
             ps.setInt(3, idCommande);
-            return ps.executeUpdate(); // 1 si ok, 0 si déjà initié
+            return ps.executeUpdate();
         }
     }
 
     // =====================================================
-    // MAPPERS
+    // ✅ MARK AS PAID (à appeler après paiement validé)
     // =====================================================
-    private Commande mapCommande(ResultSet rs) throws SQLException {
-        Commande c = new Commande();
-        c.setIdCommande(rs.getInt("id_commande"));
-        c.setIdClient(rs.getInt("id_client"));
-        c.setIdProduit(rs.getInt("id_produit"));
-        c.setQuantite(rs.getInt("quantite"));
-        c.setStatut(rs.getString("statut"));
-        // ⚠️ Ne pas mettre payment_* ici sauf si ta classe Commande a ces champs.
-        return c;
-    }
 
-    private CommandeJoinProduit mapJoin(ResultSet rs) throws SQLException {
-        CommandeJoinProduit j = new CommandeJoinProduit();
-        j.setIdCommande(rs.getInt("id_commande"));
-        j.setIdClient(rs.getInt("id_client"));
-        j.setIdProduit(rs.getInt("id_produit"));
-        j.setQuantiteCommande(rs.getInt("quantite_commande"));
-        j.setStatut(rs.getString("statut"));
-        j.setProduitNom(rs.getString("produit_nom"));
+    public int markAsPaid(int idCommande, String sessionId) throws SQLException {
+        if (idCommande <= 0)  throw new IllegalArgumentException("Id commande invalide");
+        if (sessionId == null || sessionId.isBlank())
+            throw new IllegalArgumentException("sessionId invalide");
 
-        // ✅ Payment fields (safe)
-        setIfColumnExists(rs, "payment_status", j::setPaymentStatus);
-        setIfColumnExists(rs, "payment_ref",    j::setPaymentRef);
-        setIfColumnExists(rs, "payment_url",    j::setPaymentUrl);
+        String sql =
+                "UPDATE commande " +
+                        "SET est_payee      = 1, " +
+                        "    paid_at        = NOW(), " +
+                        "    payment_status = 'paid', " +
+                        "    payment_ref    = ? " +
+                        "WHERE id_commande  = ? " +
+                        "  AND est_payee    = 0";   // idempotent : ne ré-écrit pas si déjà payée
 
-        return j;
-    }
-
-    // =====================================================
-    // UTIL: set only if column exists in resultset
-    // =====================================================
-    private void setIfColumnExists(ResultSet rs, String col, SqlConsumer<String> setter) throws SQLException {
-        if (hasColumn(rs, col)) {
-            setter.accept(rs.getString(col));
+        try (PreparedStatement ps = cnx.prepareStatement(sql)) {
+            ps.setString(1, sessionId);
+            ps.setInt(2, idCommande);
+            return ps.executeUpdate(); // 1 = succès, 0 = déjà payée
         }
     }
 
-    private boolean hasColumn(ResultSet rs, String col) throws SQLException {
-        ResultSetMetaData md = rs.getMetaData();
-        int n = md.getColumnCount();
-        for (int i = 1; i <= n; i++) {
-            if (col.equalsIgnoreCase(md.getColumnLabel(i))) return true;
-        }
-        return false;
-    }
-
+    // =====================================================
+    // GET payment_url
+    // =====================================================
     public String getPaymentUrl(int idCommande) throws SQLException {
         if (idCommande <= 0) throw new IllegalArgumentException("Id commande invalide");
 
@@ -261,9 +242,45 @@ public class CommandeRepository {
         return null;
     }
 
-    @FunctionalInterface
-    private interface SqlConsumer<T> {
-        void accept(T t) throws SQLException;
+    // =====================================================
+    // MAPPERS
+    // =====================================================
+    private Commande mapCommande(ResultSet rs) throws SQLException {
+        Commande c = new Commande();
+        c.setIdCommande(rs.getInt("id_commande"));
+        c.setIdClient(rs.getInt("id_client"));
+        c.setIdProduit(rs.getInt("id_produit"));
+        c.setQuantite(rs.getInt("quantite"));
+        c.setStatut(rs.getString("statut"));
+
+        Timestamp dateTs = rs.getTimestamp("date_commande");
+        c.setDateCommande(dateTs != null ? dateTs.toLocalDateTime() : null);
+
+        // ⚠️ PAS de paiement ici, car ton model Commande ne contient pas ces champs
+        return c;
     }
 
+    private CommandeJoinProduit mapJoin(ResultSet rs) throws SQLException {
+        CommandeJoinProduit j = new CommandeJoinProduit();
+        j.setIdCommande(rs.getInt("id_commande"));
+        j.setIdClient(rs.getInt("id_client"));
+        j.setIdProduit(rs.getInt("id_produit"));
+        j.setQuantiteCommande(rs.getInt("quantite_commande"));
+        j.setStatut(rs.getString("statut"));
+        j.setProduitNom(rs.getString("produit_nom"));
+
+        // ✅ Paiement
+        j.setPaymentStatus(rs.getString("payment_status"));
+        j.setPaymentRef(rs.getString("payment_ref"));
+        j.setPaymentUrl(rs.getString("payment_url"));
+
+        j.setEstPayee(rs.getBoolean("est_payee"));
+        Timestamp paidTs = rs.getTimestamp("paid_at");
+        j.setPaidAt(paidTs != null ? paidTs.toLocalDateTime() : null);
+
+        Timestamp dateTs = rs.getTimestamp("date_commande");
+        j.setDateCommande(dateTs != null ? dateTs.toLocalDateTime() : null);
+
+        return j;
+    }
 }

@@ -221,6 +221,8 @@
                         <TableColumn fx:id="colProduitNom" text="Produit" prefWidth="200"/>
                         <TableColumn fx:id="colQte" text="Qté" prefWidth="60"/>
                         <TableColumn fx:id="colStatut" text="Statut" prefWidth="130"/>
+                        <TableColumn fx:id="colPaymentStatus" text="Paiement" prefWidth="110"/>
+                        <TableColumn fx:id="colPayee" text="Payée" prefWidth="80"/>
                     </columns>
                     <placeholder>
                         <Label text="Aucune commande trouvée." styleClass="muted"/>

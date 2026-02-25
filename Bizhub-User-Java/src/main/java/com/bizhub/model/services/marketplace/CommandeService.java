@@ -11,6 +11,9 @@ public class CommandeService {
 
     private final CommandeRepository repo = new CommandeRepository();
 
+    // =========================
+    // CRUD de base
+    // =========================
     public void ajouter(Commande c) throws SQLException {
         repo.add(c);
     }
@@ -19,6 +22,17 @@ public class CommandeService {
         repo.updateStatut(idCommande, statut);
     }
 
+    public int changerStatutSiEnAttente(int idCommande, String statut) throws SQLException {
+        return repo.updateStatutIfEnAttente(idCommande, statut);
+    }
+
+    public void supprimer(int idCommande) throws SQLException {
+        repo.delete(idCommande);
+    }
+
+    // =========================
+    // LISTES (JOIN)
+    // =========================
     public List<CommandeJoinProduit> getAllJoinProduit() throws SQLException {
         return repo.findAllJoinProduit();
     }
@@ -27,11 +41,23 @@ public class CommandeService {
         return repo.findByClientJoinProduit(idClient);
     }
 
-    public void supprimer(int idCommande) throws SQLException {
-        try {
-            repo.delete(idCommande);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+    // ✅ IMPORTANT pour l’investisseur (commandes reçues sur SES produits)
+    public List<CommandeJoinProduit> getByOwnerJoinProduit(int ownerId) throws SQLException {
+        return repo.findByOwnerJoinProduit(ownerId);
+    }
+
+    // =========================
+    // PAIEMENT
+    // =========================
+    public int setPaymentInitiatedIfNull(int idCommande, String ref, String url) throws SQLException {
+        return repo.setPaymentInitiatedIfNull(idCommande, ref, url);
+    }
+
+    public String getPaymentUrl(int idCommande) throws SQLException {
+        return repo.getPaymentUrl(idCommande);
+    }
+
+    public int markAsPaid(int idCommande, String paymentRef) throws SQLException {
+        return repo.markAsPaid(idCommande, paymentRef);
     }
 }

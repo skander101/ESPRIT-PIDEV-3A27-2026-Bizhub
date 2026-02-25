@@ -14,8 +14,10 @@ import java.util.logging.Logger;
 /**
  * StripeGatewayClient — appelle l'API Stripe directement (pas de serveur local).
  *
+ * ✅ FIX : orderId passé en metadata → le webhook peut identifier la commande
+ * ✅ FIX : prix unitaire passé en paramètre
+ *
  * Lit la config depuis src/main/resources/stripe.properties
- * Instancié par PaymentService.
  */
 public class StripeGatewayClient {
 
@@ -54,25 +56,25 @@ public class StripeGatewayClient {
     /**
      * Crée une Stripe Checkout Session.
      *
-     * @param orderId     ID de la commande
-     * @param productName Nom du produit (affiché sur la page Stripe)
-     * @param quantity    Quantité commandée
-     * @return PaymentResult avec l'URL Checkout ou le message d'erreur
+     * @param orderId       ID de la commande (stocké en metadata → utilisé par le webhook)
+     * @param productName   Nom du produit (affiché sur la page Stripe)
+     * @param quantity      Quantité commandée
+     * @param unitCentimes  Prix unitaire en centimes (ex: 1000 = 10.00 EUR)
      */
     public PaymentResult createStripeCheckout(int orderId,
                                               String productName,
-                                              int quantity) {
+                                              int quantity,
+                                              long unitCentimes) {
         try {
             Stripe.apiKey = secretKey;
-
-            // 10.00 EUR par unité en test
-            // TODO : passer le vrai prix depuis CommandeJoinProduit.getPrix()
-            long unitCentimes = 1000L;
 
             SessionCreateParams params = SessionCreateParams.builder()
                     .setMode(SessionCreateParams.Mode.PAYMENT)
                     .setSuccessUrl(successUrl + "?session_id={CHECKOUT_SESSION_ID}")
                     .setCancelUrl(cancelUrl)
+                    // ✅ CRITIQUE : orderId en metadata → utilisé par StripeWebhookServer
+                    //    pour appeler commandeService.markAsPaid(orderId, sessionId)
+                    .putMetadata("orderId", String.valueOf(orderId))
                     .addLineItem(
                             SessionCreateParams.LineItem.builder()
                                     .setQuantity((long) quantity)
@@ -98,7 +100,11 @@ public class StripeGatewayClient {
 
             Session session = Session.create(params);
 
-            LOGGER.info("Stripe session créée : " + session.getId());
+            LOGGER.info("Stripe session créée : " + session.getId()
+                    + " | orderId=" + orderId
+                    + " | montant=" + (unitCentimes * quantity / 100.0)
+                    + " " + currency.toUpperCase());
+
             return PaymentResult.ok(session.getId(), session.getUrl());
 
         } catch (StripeException e) {
@@ -108,6 +114,13 @@ public class StripeGatewayClient {
             LOGGER.log(Level.SEVERE, "Erreur StripeGatewayClient", e);
             return PaymentResult.fail("Erreur : " + e.getMessage());
         }
+    }
+
+    /**
+     * Surcharge rétro-compatible : prix par défaut 10.00 EUR (1000 centimes).
+     */
+    public PaymentResult createStripeCheckout(int orderId, String productName, int quantity) {
+        return createStripeCheckout(orderId, productName, quantity, 1000L);
     }
 
     private static String safe(String s) { return s == null ? "" : s.trim(); }

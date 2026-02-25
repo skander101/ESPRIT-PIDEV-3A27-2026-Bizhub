@@ -2,9 +2,8 @@ package com.bizhub.model.services.marketplace;
 
 import com.bizhub.model.marketplace.CommandeJoinProduit;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
 
 /**
  * Moteur de priorité intelligente des commandes.
@@ -62,7 +61,7 @@ public class CommandePriorityEngine {
     }
 
     public String computeLabel(int score) {
-        return computeLevel(score).name();
+        return computeLevel(score).name(); // "HAUTE" / "MOYENNE" / "BASSE"
     }
 
     /**
@@ -83,12 +82,6 @@ public class CommandePriorityEngine {
     // AUTO VALIDATION INTELLIGENTE (RECOMMANDATION)
     // ---------------------------------------------------------------------
 
-    /**
-     * Recommandation : uniquement pour les commandes en_attente.
-     * Exemple règles :
-     * - Score >= 350 => recommandée
-     * - Sinon => validation manuelle
-     */
     private void applyAutoDecision(CommandeJoinProduit c, int score) {
         String statut = safeLower(c.getStatut());
 
@@ -99,7 +92,6 @@ public class CommandePriorityEngine {
             return;
         }
 
-        // Quelques signaux explicatifs (pour une raison claire)
         int qte = Math.max(0, c.getQuantiteCommande());
         int days = computeDaysOld(c);
         String prod = safeLower(c.getProduitNom());
@@ -108,27 +100,21 @@ public class CommandePriorityEngine {
         boolean grosseQte = qte >= 150;
         boolean tresAncienne = days >= 5;
 
-        // ✅ règle principale : threshold score
         if (score >= AUTO_CONFIRM_THRESHOLD) {
             c.setAutoConfirmRecommended(true);
 
-            // Raison détaillée et "pro" (workflow métier)
             StringBuilder reason = new StringBuilder("Auto-confirmation recommandée : ");
-
             reason.append("score=").append(score);
 
-            // Ajoute des explications lisibles
             if (grosseQte) reason.append(" | grosse quantité (").append(qte).append(")");
             if (tresAncienne) reason.append(" | attente ").append(days).append(" jours");
             if (prodCritique) reason.append(" | produit critique");
 
             reason.append(".");
-
             c.setAutoReason(reason.toString());
+
         } else {
             c.setAutoConfirmRecommended(false);
-
-            // Raison (guide investisseur)
             c.setAutoReason("Validation manuelle recommandée : score=" + score
                     + " (< " + AUTO_CONFIRM_THRESHOLD + ").");
         }
@@ -139,17 +125,10 @@ public class CommandePriorityEngine {
     // ---------------------------------------------------------------------
 
     private int computeDaysOld(CommandeJoinProduit c) {
-        // Si tu as un champ dateCommande (Date/Timestamp) dans CommandeJoinProduit => utilise-le.
-        // Sinon, on retourne 0.
-        Date d = c.getDateCommande();
-        if (d == null) return 0;
-
-        LocalDateTime created = LocalDateTime.ofInstant(d.toInstant(), ZoneId.systemDefault());
-        LocalDateTime now = LocalDateTime.now();
-
-        long days = java.time.Duration.between(created, now).toDays();
-        if (days < 0) days = 0;
-        return (int) days;
+        var created = c.getDateCommande();
+        if (created == null) return 0;
+        long days = java.time.Duration.between(created, java.time.LocalDateTime.now()).toDays();
+        return (int) Math.max(days, 0);
     }
 
     private String safeLower(String s) {

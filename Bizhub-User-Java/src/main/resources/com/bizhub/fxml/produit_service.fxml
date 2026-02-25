@@ -143,7 +143,7 @@
                                   GridPane.rowIndex="11" GridPane.columnIndex="1"/>
                     </GridPane>
 
-                    <!-- Message global CRUD (succès ou erreur) -->
+                    <!-- Message global CRUD -->
                     <HBox fx:id="hboxMsgCrud" spacing="6" alignment="CENTER_LEFT"
                           visible="false" managed="false">
                         <Label fx:id="iconMsgCrud" text=""/>
@@ -154,13 +154,13 @@
 
                     <HBox spacing="10">
                         <Button fx:id="btnAjouter"   text="Ajouter"   onAction="#onAjouter"
-                                maxWidth="1e9" styleClass="btn-primary"  HBox.hgrow="ALWAYS"/>
+                                maxWidth="1e9" styleClass="btn-primary"   HBox.hgrow="ALWAYS"/>
                         <Button fx:id="btnModifier"  text="Modifier"  onAction="#onModifier"
                                 maxWidth="1e9" styleClass="btn-secondary" HBox.hgrow="ALWAYS"/>
                     </HBox>
                     <HBox spacing="10">
                         <Button fx:id="btnSupprimer" text="Supprimer" onAction="#onSupprimer"
-                                maxWidth="1e9" styleClass="btn-danger"   HBox.hgrow="ALWAYS"/>
+                                maxWidth="1e9" styleClass="btn-danger"    HBox.hgrow="ALWAYS"/>
                         <Button fx:id="btnVider"     text="Vider"     onAction="#onVider"
                                 maxWidth="1e9" styleClass="btn-secondary" HBox.hgrow="ALWAYS"/>
                     </HBox>
@@ -176,12 +176,11 @@
                         <Text styleClass="h2" text="Liste Produits/Services"/>
                         <TableView fx:id="tableProduits" VBox.vgrow="ALWAYS">
                             <columns>
-                                <TableColumn fx:id="colId"          text="ID"        prefWidth="60"/>
-                                <TableColumn fx:id="colNom"         text="Nom"       prefWidth="180"/>
-                                <TableColumn fx:id="colCategorie"   text="Catégorie" prefWidth="140"/>
-                                <TableColumn fx:id="colQuantite"    text="Qté"       prefWidth="70"/>
-                                <TableColumn fx:id="colPrix"        text="Prix"      prefWidth="100"/>
-                                <TableColumn fx:id="colDisponible"  text="Dispo"     prefWidth="70"/>
+                                <TableColumn fx:id="colNom"        text="Nom"       prefWidth="180"/>
+                                <TableColumn fx:id="colCategorie"  text="Catégorie" prefWidth="140"/>
+                                <TableColumn fx:id="colQuantite"   text="Qté"       prefWidth="70"/>
+                                <TableColumn fx:id="colPrix"       text="Prix"      prefWidth="100"/>
+                                <TableColumn fx:id="colDisponible" text="Dispo"     prefWidth="70"/>
                             </columns>
                             <placeholder>
                                 <Label text="Aucun produit." styleClass="muted"/>
@@ -191,8 +190,6 @@
 
                     <!-- ══════════════════════════════
                          SECTION COMMANDES INVESTISSEUR
-                         visible=false par défaut
-                         affiché en runtime si investisseur
                     ══════════════════════════════ -->
                     <VBox fx:id="boxCommandesInvestor" spacing="10" styleClass="card"
                           visible="false" managed="false" VBox.vgrow="ALWAYS">
@@ -211,19 +208,37 @@
                             <Label fx:id="lblCmdInfo" text="" styleClass="hint" wrapText="true"/>
                         </HBox>
 
-                        <!-- Table commandes -->
-                        <TableView fx:id="tableCommandes" VBox.vgrow="ALWAYS" prefHeight="220">
+                        <!-- ✅ Table commandes avec colonnes paiement -->
+                        <TableView fx:id="tableCommandes" VBox.vgrow="ALWAYS" prefHeight="260">
                             <columns>
-                                <TableColumn fx:id="colCmdId"      text="ID"      prefWidth="55"/>
-                                <TableColumn fx:id="colCmdClient"  text="Client"  prefWidth="70"/>
-                                <TableColumn fx:id="colCmdProduit" text="Produit" prefWidth="180"/>
-                                <TableColumn fx:id="colCmdQte"     text="Qté"     prefWidth="55"/>
-                                <TableColumn fx:id="colCmdStatut"  text="Statut"  prefWidth="120"/>
-                                <TableColumn fx:id="colCmdPriorite" text="Priorité" prefWidth="120"/>
-                                <TableColumn fx:id="colCmdScore" text="Score" prefWidth="80"/>
+                                <!-- Colonnes masquées en runtime -->
+                                <TableColumn fx:id="colCmdId"     text="ID"      prefWidth="55"/>
+                                <TableColumn fx:id="colCmdClient" text="Client"  prefWidth="70"/>
+
+                                <!-- Colonnes visibles -->
+                                <TableColumn fx:id="colCmdProduit"  text="Produit"   prefWidth="160"/>
+                                <TableColumn fx:id="colCmdQte"      text="Qté"       prefWidth="50"/>
+                                <TableColumn fx:id="colCmdStatut"   text="Statut"    prefWidth="115"/>
+                                <TableColumn fx:id="colCmdPriorite" text="Priorité"  prefWidth="115"/>
+                                <TableColumn fx:id="colCmdScore"    text="Score"     prefWidth="100"/>
+
+                                <!-- ✅ Colonne paiement Stripe -->
+                                <TableColumn fx:id="colCmdPaymentStatus"
+                                             text="Paiement"
+                                             prefWidth="115"/>
+
+                                <!-- ✅ Colonne payée oui/non -->
+                                <TableColumn fx:id="colCmdPayee"
+                                             text="Payée ?"
+                                             prefWidth="100"/>
+
+                                <!-- ✅ Colonne date paiement -->
+                                <TableColumn fx:id="colCmdPaidAt"
+                                             text="Date paiement"
+                                             prefWidth="140"/>
                             </columns>
                             <placeholder>
-                                <Label text="Aucune commande." styleClass="muted"/>
+                                <Label text="Aucune commande reçue." styleClass="muted"/>
                             </placeholder>
                         </TableView>
 
@@ -239,7 +254,7 @@
                                     styleClass="btn-danger"/>
                         </HBox>
 
-                        <!-- Message inline commandes (succès / erreur) — PAS de popup -->
+                        <!-- Message inline commandes -->
                         <HBox fx:id="hboxMsgCmd" spacing="6" alignment="CENTER_LEFT"
                               visible="false" managed="false">
                             <Label fx:id="iconMsgCmd" text=""/>
