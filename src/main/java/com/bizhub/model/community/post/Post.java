@@ -9,6 +9,7 @@ public class Post {
     private String content;
     private String category;
     private LocalDateTime createdAt;
+    private String authorName; // joined from user table, not a DB column
 
     public Post() {}
 
@@ -36,6 +37,9 @@ public class Post {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getAuthorName() { return authorName; }
+    public void setAuthorName(String authorName) { this.authorName = authorName; }
 
     @Override
     public String toString() {

@@ -59,6 +59,13 @@ public class ShowPostsController {
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
 
+    /** Returns true if current user owns this resource OR is admin */
+    private boolean canEdit(int resourceUserId) {
+        var me = AppSession.getCurrentUser();
+        if (me == null) return false;
+        return me.getUserId() == resourceUserId || "admin".equalsIgnoreCase(me.getUserType());
+    }
+
     @FXML
     public void initialize() {
         // Setup combos
@@ -302,8 +309,9 @@ public class ShowPostsController {
             super.updateItem(post, empty);
             if (empty || post == null) { setGraphic(null); setText(null); return; }
 
-            // Avatar circle
-            Label avatar = new Label(post.getTitle().substring(0, 1).toUpperCase());
+            // Avatar circle with first letter of author
+            String author = post.getAuthorName() != null ? post.getAuthorName() : "?";
+            Label avatar = new Label(author.substring(0, 1).toUpperCase());
             avatar.setStyle(
                     "-fx-background-color:#FFB84D;" +
                             "-fx-text-fill:#0F2035;" +
@@ -314,6 +322,10 @@ public class ShowPostsController {
                             "-fx-background-radius:999;" +
                             "-fx-alignment:center;"
             );
+
+            // Author name
+            Label authorLabel = new Label(author);
+            authorLabel.setStyle("-fx-text-fill:white;-fx-font-weight:bold;-fx-font-size:13px;");
 
             // Category chip
             Label cat = new Label(post.getCategory() != null ? post.getCategory() : "General");
@@ -327,7 +339,7 @@ public class ShowPostsController {
 
             // Date
             String dateStr = post.getCreatedAt() != null ? post.getCreatedAt().format(FMT) : "";
-            Label date = new Label(dateStr);
+            Label date = new Label("🕐 " + dateStr);
             date.setStyle("-fx-text-fill:#607A93;-fx-font-size:11px;");
 
             // Title
@@ -342,26 +354,27 @@ public class ShowPostsController {
             content.setStyle("-fx-text-fill:#A0B4C8;-fx-font-size:13px;");
             content.setWrapText(true);
 
-            // Action buttons
+            // Action buttons — comments always visible, edit/delete only if owner or admin
             Button btnComment = new Button("💬 Comments");
-            Button btnEdit    = new Button("✏ Edit");
-            Button btnDelete  = new Button("🗑 Delete");
-
             btnComment.setStyle("-fx-background-color:#1A3352;-fx-text-fill:#FFB84D;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:5 12;");
-            btnEdit.setStyle(   "-fx-background-color:#2A4A6F;-fx-text-fill:white;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:5 12;");
-            btnDelete.setStyle( "-fx-background-color:#7f1d1d;-fx-text-fill:white;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:5 12;");
-
             btnComment.setOnAction(e -> openComments(post));
-            btnEdit.setOnAction(   e -> showEditForm(post));
-            btnDelete.setOnAction( e -> deletePost(post));
 
-            HBox meta = new HBox(8, cat, date);
+            HBox actions = new HBox(8, btnComment);
+
+            if (canEdit(post.getUserId())) {
+                Button btnEdit   = new Button("✏ Edit");
+                Button btnDelete = new Button("🗑 Delete");
+                btnEdit.setStyle(  "-fx-background-color:#2A4A6F;-fx-text-fill:white;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:5 12;");
+                btnDelete.setStyle("-fx-background-color:#7f1d1d;-fx-text-fill:white;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:5 12;");
+                btnEdit.setOnAction(  e -> showEditForm(post));
+                btnDelete.setOnAction(e -> deletePost(post));
+                actions.getChildren().addAll(btnEdit, btnDelete);
+            }
+
+            HBox meta = new HBox(8, authorLabel, cat, date);
             meta.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
-            HBox actions = new HBox(8, btnComment, btnEdit, btnDelete);
-
-            HBox header = new HBox(12, avatar,
-                    new VBox(4, meta, title));
+            HBox header = new HBox(12, avatar, new VBox(4, meta, title));
             header.setAlignment(javafx.geometry.Pos.TOP_LEFT);
             HBox.setHgrow(header.getChildren().get(1), Priority.ALWAYS);
 
@@ -388,8 +401,8 @@ public class ShowPostsController {
             super.updateItem(comment, empty);
             if (empty || comment == null) { setGraphic(null); setText(null); return; }
 
-            String initials = "U";
-            Label avatar = new Label(initials);
+            String author = comment.getAuthorName() != null ? comment.getAuthorName() : "User";
+            Label avatar = new Label(author.substring(0, 1).toUpperCase());
             avatar.setStyle(
                     "-fx-background-color:#2A4A6F;" +
                             "-fx-text-fill:#FFB84D;" +
@@ -401,27 +414,32 @@ public class ShowPostsController {
                             "-fx-alignment:center;"
             );
 
+            Label authorLabel = new Label(author);
+            authorLabel.setStyle("-fx-text-fill:#FFB84D;-fx-font-weight:bold;-fx-font-size:12px;");
+
             Label content = new Label(comment.getContent());
             content.setStyle("-fx-text-fill:white;-fx-font-size:13px;");
             content.setWrapText(true);
 
             String dateStr = comment.getCreatedAt() != null ? comment.getCreatedAt().format(FMT) : "";
-            Label date = new Label(dateStr);
+            Label date = new Label("🕐 " + dateStr);
             date.setStyle("-fx-text-fill:#607A93;-fx-font-size:11px;");
 
-            Button btnEdit = new Button("✏");
-            Button btnDel  = new Button("🗑");
-            btnEdit.setStyle("-fx-background-color:#2A4A6F;-fx-text-fill:white;-fx-background-radius:4;-fx-cursor:hand;-fx-padding:3 8;");
-            btnDel.setStyle( "-fx-background-color:#7f1d1d;-fx-text-fill:white;-fx-background-radius:4;-fx-cursor:hand;-fx-padding:3 8;");
-            btnEdit.setOnAction(e -> openEditComment(comment));
-            btnDel.setOnAction( e -> deleteComment(comment));
-
-            HBox btns = new HBox(6, btnEdit, btnDel);
-            Pane spacer = new Pane(); HBox.setHgrow(spacer, Priority.ALWAYS);
-            HBox footer = new HBox(4, date, spacer, btns);
+            HBox footer = new HBox(8, date);
             footer.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
-            VBox body = new VBox(4, content, footer);
+            if (canEdit(comment.getUserId())) {
+                Button btnEdit = new Button("✏");
+                Button btnDel  = new Button("🗑");
+                btnEdit.setStyle("-fx-background-color:#2A4A6F;-fx-text-fill:white;-fx-background-radius:4;-fx-cursor:hand;-fx-padding:3 8;");
+                btnDel.setStyle( "-fx-background-color:#7f1d1d;-fx-text-fill:white;-fx-background-radius:4;-fx-cursor:hand;-fx-padding:3 8;");
+                btnEdit.setOnAction(e -> openEditComment(comment));
+                btnDel.setOnAction( e -> deleteComment(comment));
+                Pane spacer = new Pane(); HBox.setHgrow(spacer, Priority.ALWAYS);
+                footer.getChildren().addAll(spacer, btnEdit, btnDel);
+            }
+
+            VBox body = new VBox(3, authorLabel, content, footer);
             HBox.setHgrow(body, Priority.ALWAYS);
 
             HBox row = new HBox(10, avatar, body);

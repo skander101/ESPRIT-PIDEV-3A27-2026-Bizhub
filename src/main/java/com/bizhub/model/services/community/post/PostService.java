@@ -31,7 +31,9 @@ public class PostService {
     }
 
     public List<Post> findAll() throws SQLException {
-        String sql = "SELECT * FROM post ORDER BY created_at DESC";
+        String sql = "SELECT p.*, u.full_name as author_name FROM post p " +
+                "LEFT JOIN `user` u ON p.user_id = u.user_id " +
+                "ORDER BY p.created_at DESC";
         List<Post> posts = new ArrayList<>();
         try (Statement st = cnx.createStatement(); ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) posts.add(mapRow(rs));
@@ -78,6 +80,7 @@ public class PostService {
         p.setCategory(rs.getString("category"));
         Timestamp ts = rs.getTimestamp("created_at");
         p.setCreatedAt(ts == null ? null : ts.toLocalDateTime());
+        try { p.setAuthorName(rs.getString("author_name")); } catch (SQLException ignored) {}
         return p;
     }
 }

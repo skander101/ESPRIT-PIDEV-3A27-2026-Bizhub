@@ -29,7 +29,9 @@ public class CommentService {
     }
 
     public List<Comment> findByPostId(int postId) throws SQLException {
-        String sql = "SELECT * FROM commentaire WHERE post_id=? ORDER BY created_at ASC";
+        String sql = "SELECT c.*, u.full_name as author_name FROM commentaire c " +
+                "LEFT JOIN `user` u ON c.user_id = u.user_id " +
+                "WHERE c.post_id=? ORDER BY c.created_at ASC";
         List<Comment> comments = new ArrayList<>();
         try (PreparedStatement pst = cnx.prepareStatement(sql)) {
             pst.setInt(1, postId);
@@ -65,6 +67,7 @@ public class CommentService {
         c.setContent(rs.getString("content"));
         Timestamp ts = rs.getTimestamp("created_at");
         c.setCreatedAt(ts == null ? null : ts.toLocalDateTime());
+        try { c.setAuthorName(rs.getString("author_name")); } catch (SQLException ignored) {}
         return c;
     }
 }
