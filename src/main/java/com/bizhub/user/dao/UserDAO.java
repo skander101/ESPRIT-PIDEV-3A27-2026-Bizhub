@@ -92,9 +92,12 @@ public class UserDAO {
     }
 
     public Optional<User> findByEmail(String email) throws SQLException {
-        String sql = "SELECT * FROM `user` WHERE email=?";
+        if (email == null) return Optional.empty();
+        String trimmed = email.trim();
+        if (trimmed.isEmpty()) return Optional.empty();
+        String sql = "SELECT * FROM `user` WHERE TRIM(email)=?";
         try (PreparedStatement pst = cnx.prepareStatement(sql)) {
-            pst.setString(1, email);
+            pst.setString(1, trimmed);
             try (ResultSet rs = pst.executeQuery()) {
                 if (!rs.next()) return Optional.empty();
                 return Optional.of(mapRow(rs));

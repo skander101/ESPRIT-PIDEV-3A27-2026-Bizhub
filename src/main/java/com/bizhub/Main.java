@@ -14,9 +14,9 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        URL fxml = Main.class.getResource("/com/bizhub/fxml/login.fxml");
+        URL fxml = Main.class.getResource("/com/bizhub/fxml/formations.fxml");
         if (fxml == null) {
-            throw new IllegalStateException("Cannot find /com/bizhub/fxml/login.fxml on classpath");
+            throw new IllegalStateException("Cannot find /com/bizhub/fxml/formations.fxml on classpath");
         }
 
         Parent initial = FXMLLoader.load(fxml);

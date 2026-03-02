@@ -7,6 +7,7 @@ import com.bizhub.user.model.User;
 import com.bizhub.common.service.AppSession;
 import com.bizhub.common.service.NavigationService;
 import com.bizhub.common.service.Services;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -219,11 +220,16 @@ public class ParticipationManagementController {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Confirmer");
         confirm.setHeaderText("Supprimer cette participation ?");
-        confirm.setContentText("ID #" + p.getId());
+        String detail = p.getId() > 0 ? "ID #" + p.getId() : "Formation #" + p.getFormationId() + " / User #" + p.getUserId();
+        confirm.setContentText(detail);
         if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
 
         try {
-            Services.participations().delete(p.getId());
+            if (p.getId() > 0) {
+                Services.participations().delete(p.getId());
+            } else {
+                Services.participations().deleteByFormationAndUser(p.getFormationId(), p.getUserId());
+            }
             loadData();
         } catch (SQLException e) {
             showError(e.getMessage());
@@ -294,18 +300,22 @@ public class ParticipationManagementController {
     }
 
     private void showError(String msg) {
-        Alert a = new Alert(Alert.AlertType.ERROR);
-        a.setTitle("Erreur");
-        a.setHeaderText("Échec de l'opération");
-        a.setContentText(msg);
-        a.showAndWait();
+        Platform.runLater(() -> {
+            Alert a = new Alert(Alert.AlertType.ERROR);
+            a.setTitle("Erreur");
+            a.setHeaderText("Échec de l'opération");
+            a.setContentText(msg);
+            a.show();
+        });
     }
 
     private void info(String msg) {
-        Alert a = new Alert(Alert.AlertType.INFORMATION);
-        a.setTitle("Info");
-        a.setHeaderText(null);
-        a.setContentText(msg);
-        a.showAndWait();
+        Platform.runLater(() -> {
+            Alert a = new Alert(Alert.AlertType.INFORMATION);
+            a.setTitle("Info");
+            a.setHeaderText(null);
+            a.setContentText(msg);
+            a.show();
+        });
     }
 }

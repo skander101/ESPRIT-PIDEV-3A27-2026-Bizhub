@@ -52,7 +52,7 @@
 
     <Pane VBox.vgrow="ALWAYS" />
 
-    <Button text="Logout" onAction="#logout" styleClass="danger-button" />
+    <Button fx:id="authButton" text="Sign in" onAction="#authAction" styleClass="btn-primary" />
 
 </VBox>
 

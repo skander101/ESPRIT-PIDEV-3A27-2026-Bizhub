@@ -23,7 +23,7 @@
             <version>8.0.33</version>
         </dependency>
 
-        <!-- JavaFX dependencies without classifier for now -->
+        <!-- JavaFX core dependencies -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
@@ -35,10 +35,55 @@
             <version>${javafx.version}</version>
         </dependency>
 
+        <!-- JavaFX WebView (pour la carte) -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.mindrot</groupId>
             <artifactId>jbcrypt</artifactId>
             <version>0.4</version>
+        </dependency>
+
+        <!-- ZXing pour générer les QR codes en local (sans Internet) -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+
+        <!-- Jakarta Mail pour envoi email de validation (SMTP) -->
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>jakarta.mail</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+
+        <!-- OpenPDF pour générer le PDF fiche d'inscription / attestation -->
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>1.3.30</version>
+        </dependency>
+
+        <!-- Google Calendar API : créer un événement avec lien Meet automatique -->
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-calendar</artifactId>
+            <version>v3-rev20220520-1.32.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>2.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.auth</groupId>
+            <artifactId>google-auth-library-oauth2-http</artifactId>
+            <version>1.23.0</version>
         </dependency>
     </dependencies>
 
@@ -66,10 +111,13 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>com.bizhub.Main</mainClass>
-                    <!-- Add OS detection properties -->
                     <options>
                         <option>-Dos.detected.classifier=${os.detected.classifier}</option>
                     </options>
+                    <launcher>direct</launcher>
+                    <stripDebug>true</stripDebug>
+                    <noManPages>true</noManPages>
+                    <noHeaderFiles>true</noHeaderFiles>
                 </configuration>
             </plugin>
 

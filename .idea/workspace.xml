@@ -4,7 +4,78 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="94bd980f-8e8c-4c2c-ad67-38d0fb9e8ccf" name="Changes" comment="" />
+    <list default="true" id="94bd980f-8e8c-4c2c-ad67-38d0fb9e8ccf" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/common/service/AppSession.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/common/service/AppSession.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/common/service/Services.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/common/service/Services.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/formation/controller/FormationDetailsController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/formation/controller/FormationDetailsController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/formation/controller/FormationFormController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/formation/controller/FormationFormController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/formation/controller/FormationManagementController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/formation/controller/FormationManagementController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/formation/dao/FormationDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/formation/dao/FormationDAO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/formation/model/Formation.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/formation/model/Formation.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/participation/controller/ParticipationFormController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/participation/controller/ParticipationFormController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/participation/controller/ParticipationManagementController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/participation/controller/ParticipationManagementController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/participation/dao/ParticipationDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/participation/dao/ParticipationDAO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/participation/model/Participation.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/participation/model/Participation.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/review/controller/ReviewManagementController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/review/controller/ReviewManagementController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/user/controller/AdminDashboardController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/user/controller/AdminDashboardController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/user/controller/UserManagementController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/user/controller/UserManagementController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/user/controller/UserProfileController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/user/controller/UserProfileController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/user/controller/UserSidebarController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/user/controller/UserSidebarController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bizhub/user/dao/UserDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bizhub/user/dao/UserDAO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/com/bizhub/css/theme.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/com/bizhub/css/theme.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/formation-details.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/formation-details.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/formation-form.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/formation-form.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/user-sidebar.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/com/bizhub/fxml/user-sidebar.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/sql/bizhub_users_reviews_seed.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/sql/bizhub_users_reviews_seed.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/sql/participation_table.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/sql/participation_table.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/Main.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/common/service/AppSession.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/common/service/AppSession.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/common/service/Services.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/common/service/Services.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/css/theme.css" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/css/theme.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/formation/controller/FormationDetailsController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/formation/controller/FormationDetailsController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/formation/controller/FormationFormController$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/formation/controller/FormationFormController$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/formation/controller/FormationFormController$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/formation/controller/FormationFormController$2.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/formation/controller/FormationFormController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/formation/controller/FormationFormController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/formation/controller/FormationManagementController$FormationCardCell.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/formation/controller/FormationManagementController$FormationCardCell.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/formation/controller/FormationManagementController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/formation/controller/FormationManagementController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/formation/dao/FormationDAO.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/formation/dao/FormationDAO.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/formation/model/Formation.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/formation/model/Formation.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/fxml/formation-details.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/fxml/formation-details.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/fxml/formation-form.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/fxml/formation-form.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/fxml/user-sidebar.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/fxml/user-sidebar.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationFormController$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationFormController$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationFormController$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationFormController$2.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationFormController$3.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationFormController$3.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationFormController$4.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationFormController$4.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationFormController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationFormController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationManagementController$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationManagementController$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationManagementController$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationManagementController$2.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationManagementController$ParticipationCardCell.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationManagementController$ParticipationCardCell.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationManagementController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/participation/controller/ParticipationManagementController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/participation/dao/ParticipationDAO.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/participation/dao/ParticipationDAO.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/participation/model/Participation.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/participation/model/Participation.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/review/controller/ReviewManagementController$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/review/controller/ReviewManagementController$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/review/controller/ReviewManagementController$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/review/controller/ReviewManagementController$2.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/review/controller/ReviewManagementController$ReviewCardCell.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/review/controller/ReviewManagementController$ReviewCardCell.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/review/controller/ReviewManagementController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/review/controller/ReviewManagementController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/user/controller/AdminDashboardController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/user/controller/AdminDashboardController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/user/controller/UserManagementController$UserCardCell.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/user/controller/UserManagementController$UserCardCell.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/user/controller/UserManagementController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/user/controller/UserManagementController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/user/controller/UserProfileController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/user/controller/UserProfileController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/user/controller/UserSidebarController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/user/controller/UserSidebarController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/bizhub/user/dao/UserDAO.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/bizhub/user/dao/UserDAO.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sql/bizhub_users_reviews_seed.sql" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/sql/bizhub_users_reviews_seed.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/sql/participation_table.sql" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/sql/participation_table.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-archiver/pom.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/workshopJDBC-3a27-1.0-SNAPSHOT.jar" beforeDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -19,7 +90,7 @@
     </option>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/Bizhub" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 7
@@ -29,30 +100,30 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.Main.executor": "Run",
-    "Maven.workshopJDBC-3a27 [clean].executor": "Run",
-    "Maven.workshopJDBC-3a27 [install].executor": "Run",
-    "Maven.workshopJDBC-3a27 [validate].executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "User-Java",
-    "junie.onboarding.icon.badge.shown": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/Lenovo/Downloads/TransferNow-20260207Drrhizgh/workshopJDBC-3a27/BizHub",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.lookFeel",
-    "to.speed.mode.migration.done": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
+    &quot;Maven.workshopJDBC-3a27 [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.workshopJDBC-3a27 [install].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.workshopJDBC-3a27 [validate].executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;Formation&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Lenovo/Downloads/TransferNow-20260207Drrhizgh/workshopJDBC-3a27/BizHub&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.externalTools&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration default="true" type="JetRunConfigurationType">
       <module name="BizHub" />
@@ -98,5 +169,9 @@
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>

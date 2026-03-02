@@ -18,7 +18,7 @@ public class FormationDAO {
     }
 
     public void create(Formation f) throws SQLException {
-        String sql = "INSERT INTO formation(title, description, trainer_id, start_date, end_date, cost) VALUES (?,?,?,?,?,?)";
+        String sql = "INSERT INTO formation(title, description, trainer_id, start_date, end_date, cost, lieu, enligne) VALUES (?,?,?,?,?,?,?,?)";
         try (PreparedStatement pst = cnx.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pst.setString(1, f.getTitle());
             pst.setString(2, f.getDescription());
@@ -26,6 +26,8 @@ public class FormationDAO {
             pst.setDate(4, Date.valueOf(requireDate(f.getStartDate(), "start_date")));
             pst.setDate(5, Date.valueOf(requireDate(f.getEndDate(), "end_date")));
             pst.setBigDecimal(6, f.getCost() == null ? new BigDecimal("0.00") : f.getCost());
+            pst.setString(7, f.getLieu());
+            pst.setBoolean(8, f.isEnLigne());
             pst.executeUpdate();
             try (ResultSet rs = pst.getGeneratedKeys()) {
                 if (rs.next()) f.setFormationId(rs.getInt(1));
@@ -34,7 +36,7 @@ public class FormationDAO {
     }
 
     public Optional<Formation> findById(int formationId) throws SQLException {
-        String sql = "SELECT formation_id, title, description, trainer_id, start_date, end_date, cost FROM formation WHERE formation_id=?";
+        String sql = "SELECT formation_id, title, description, trainer_id, start_date, end_date, cost, lieu, enligne FROM formation WHERE formation_id=?";
         try (PreparedStatement pst = cnx.prepareStatement(sql)) {
             pst.setInt(1, formationId);
             try (ResultSet rs = pst.executeQuery()) {
@@ -45,7 +47,7 @@ public class FormationDAO {
     }
 
     public List<Formation> findAll() throws SQLException {
-        String sql = "SELECT formation_id, title, description, trainer_id, start_date, end_date, cost FROM formation ORDER BY formation_id DESC";
+        String sql = "SELECT formation_id, title, description, trainer_id, start_date, end_date, cost, lieu, enligne FROM formation ORDER BY formation_id DESC";
         List<Formation> out = new ArrayList<>();
         try (Statement st = cnx.createStatement(); ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) out.add(mapRow(rs));
@@ -54,7 +56,7 @@ public class FormationDAO {
     }
 
     public List<Formation> findByTrainerId(int trainerId) throws SQLException {
-        String sql = "SELECT formation_id, title, description, trainer_id, start_date, end_date, cost FROM formation WHERE trainer_id=? ORDER BY formation_id DESC";
+        String sql = "SELECT formation_id, title, description, trainer_id, start_date, end_date, cost, lieu, enligne FROM formation WHERE trainer_id=? ORDER BY formation_id DESC";
         List<Formation> out = new ArrayList<>();
         try (PreparedStatement pst = cnx.prepareStatement(sql)) {
             pst.setInt(1, trainerId);
@@ -66,7 +68,7 @@ public class FormationDAO {
     }
 
     public void update(Formation f) throws SQLException {
-        String sql = "UPDATE formation SET title=?, description=?, trainer_id=?, start_date=?, end_date=?, cost=? WHERE formation_id=?";
+        String sql = "UPDATE formation SET title=?, description=?, trainer_id=?, start_date=?, end_date=?, cost=?, lieu=?, enligne=? WHERE formation_id=?";
         try (PreparedStatement pst = cnx.prepareStatement(sql)) {
             pst.setString(1, f.getTitle());
             pst.setString(2, f.getDescription());
@@ -74,7 +76,9 @@ public class FormationDAO {
             pst.setDate(4, Date.valueOf(requireDate(f.getStartDate(), "start_date")));
             pst.setDate(5, Date.valueOf(requireDate(f.getEndDate(), "end_date")));
             pst.setBigDecimal(6, f.getCost() == null ? new BigDecimal("0.00") : f.getCost());
-            pst.setInt(7, f.getFormationId());
+            pst.setString(7, f.getLieu());
+            pst.setBoolean(8, f.isEnLigne());
+            pst.setInt(9, f.getFormationId());
             pst.executeUpdate();
         }
     }
@@ -100,6 +104,8 @@ public class FormationDAO {
         f.setEndDate(ed == null ? null : ed.toLocalDate());
 
         f.setCost(rs.getBigDecimal("cost"));
+        f.setLieu(rs.getString("lieu"));
+        f.setEnLigne(rs.getBoolean("enligne"));
         return f;
     }
 

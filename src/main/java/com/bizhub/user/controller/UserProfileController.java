@@ -2,6 +2,7 @@ package com.bizhub.user.controller;
 
 import com.bizhub.user.model.User;
 import com.bizhub.common.service.*;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -49,7 +50,11 @@ public class UserProfileController {
         }
 
         me = AppSession.getCurrentUser();
-        if (me == null) return;
+        if (me == null) {
+            Stage stage = (Stage) (root != null ? root.getScene().getWindow() : null);
+            if (stage != null) new NavigationService(stage).goToLogin();
+            return;
+        }
 
         // reload from DB to get all fields
         try {
@@ -181,18 +186,22 @@ public class UserProfileController {
     }
 
     private void info(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Information");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Information");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.show();
+        });
     }
 
     private void showError(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.show();
+        });
     }
 }

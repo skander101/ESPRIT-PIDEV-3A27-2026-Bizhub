@@ -18,15 +18,14 @@ VALUES
  ('user1@bizhub.tn', @pwd, 'startup', 'Startup User', '22110002', 'StartupCo', 'SaaS', 1),
  ('inactive@bizhub.tn', @pwd, 'startup', 'Inactive User', NULL, NULL, NULL, 0);
 
--- FORMATIONS (minimal columns used by the mini-project)
--- Note: BizHub.sql defines AUTO_INCREMENT formation_id; your excerpt used INT PRIMARY KEY.
--- This insert works for both if AUTO_INCREMENT is present.
-INSERT INTO formation (title, trainer_id)
+-- FORMATIONS (colonnes principales utilisées par le mini-projet)
+-- Adapter aux nouvelles colonnes NOT NULL: lieu, enligne
+INSERT INTO formation (title, trainer_id, lieu, enligne)
 SELECT 'Java JDBC Basics', u.user_id
 FROM `user` u WHERE u.email='trainer@bizhub.tn'
 LIMIT 1;
 
-INSERT INTO formation (title, trainer_id)
+INSERT INTO formation (title, trainer_id, lieu, enligne)
 SELECT 'Advanced JavaFX', u.user_id
 FROM `user` u WHERE u.email='trainer@bizhub.tn'
 LIMIT 1;

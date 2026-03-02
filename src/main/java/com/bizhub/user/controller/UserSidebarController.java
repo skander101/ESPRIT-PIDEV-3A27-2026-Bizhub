@@ -6,6 +6,7 @@ import com.bizhub.common.service.NavigationService;
 import com.bizhub.common.service.Services;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -24,6 +25,7 @@ public class UserSidebarController {
 
     @FXML private Text nameText;
     @FXML private Text roleText;
+    @FXML private Button authButton;
 
     @FXML
     public void initialize() {
@@ -33,7 +35,15 @@ public class UserSidebarController {
             roleText.setText("");
             avatarInitials.setText("BH");
             avatarView.setVisible(false);
+            if (authButton != null) {
+                authButton.setText("Sign in");
+            }
             return;
+        }
+        if (authButton != null) {
+            authButton.setText("Logout");
+            authButton.getStyleClass().remove("btn-primary");
+            authButton.getStyleClass().add("danger-button");
         }
 
         nameText.setText(me.getFullName() == null ? "User" : me.getFullName());
@@ -124,11 +134,22 @@ public class UserSidebarController {
         new NavigationService(stage).goToReviews();
     }
 
+    /** Sign in (when guest) or Logout (when logged in). */
+    @FXML
+    public void authAction() {
+        if (!AppSession.isAuthenticated()) {
+            Stage stage = (Stage) nameText.getScene().getWindow();
+            new NavigationService(stage).goToLogin();
+            return;
+        }
+        logout();
+    }
+
     @FXML
     public void logout() {
         AppSession.clear();
         Services.auth().logout();
         Stage stage = (Stage) nameText.getScene().getWindow();
-        new NavigationService(stage).goToLogin();
+        new NavigationService(stage).goToFormations();
     }
 }

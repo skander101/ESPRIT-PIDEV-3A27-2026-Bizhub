@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 public class ParticipationFormController {
 
@@ -31,6 +32,9 @@ public class ParticipationFormController {
 
     private Participation editing;
     private Runnable onSaved;
+    /** Clé d’origine pour la modification quand id_candidature est NULL (identification par formation_id + user_id). */
+    private int originalFormationId;
+    private int originalUserId;
 
     @FXML
     public void initialize() {
@@ -84,8 +88,10 @@ public class ParticipationFormController {
     public void setEditing(Participation p, Runnable onSaved) {
         this.editing = p;
         this.onSaved = onSaved;
+        originalFormationId = p != null ? p.getFormationId() : 0;
+        originalUserId = p != null ? p.getUserId() : 0;
 
-        boolean isEdit = p != null && p.getId() > 0;
+        boolean isEdit = p != null && (p.getId() > 0 || (p.getFormationId() > 0 && p.getUserId() > 0));
         titleText.setText(isEdit ? "Modifier la participation" : "Nouvelle participation");
 
         if (isEdit) {
@@ -163,24 +169,50 @@ public class ParticipationFormController {
         LocalDateTime dateAffectation = LocalDateTime.of(date, time);
 
         try {
-            boolean isEdit = editing != null && editing.getId() > 0;
+            boolean isEdit = editing != null && (editing.getId() > 0 || (editing.getFormationId() > 0 && editing.getUserId() > 0));
             if (editing == null) editing = new Participation();
 
             editing.setFormationId(formation.getFormationId());
             editing.setUserId(user.getUserId());
             editing.setDateAffectation(dateAffectation);
-            editing.setRemarques(remarquesArea.getText());
+            editing.setRemarques(remarquesArea.getText() != null ? remarquesArea.getText() : "");
 
             if (!isEdit) {
+                // Éviter le doublon : un même participant ne peut être inscrit qu'une fois par formation
+                Optional<Participation> existing = Services.participations().findByFormationAndUser(editing.getFormationId(), editing.getUserId());
+                if (existing.isPresent()) {
+                    errorLabel.setText("Ce participant est déjà inscrit à cette formation.");
+                    return;
+                }
                 Services.participations().create(editing);
             } else {
-                Services.participations().update(editing);
+                // En modification, vérifier qu'aucune autre ligne n'a déjà (formation, user) sauf celle qu'on édite
+                Optional<Participation> existing = Services.participations().findByFormationAndUser(editing.getFormationId(), editing.getUserId());
+                if (existing.isPresent()) {
+                    int otherId = existing.get().getId();
+                    boolean sameRow = (otherId > 0 && otherId == editing.getId())
+                            || (otherId <= 0 && existing.get().getFormationId() == originalFormationId && existing.get().getUserId() == originalUserId);
+                    if (!sameRow) {
+                        errorLabel.setText("Ce participant est déjà inscrit à cette formation.");
+                        return;
+                    }
+                }
+                if (editing.getId() > 0) {
+                    Services.participations().update(editing);
+                } else {
+                    Services.participations().updateByFormationAndUser(editing, originalFormationId, originalUserId);
+                }
             }
 
             if (onSaved != null) onSaved.run();
             close();
         } catch (SQLException e) {
-            errorLabel.setText(e.getMessage());
+            String msg = e.getMessage() != null ? e.getMessage() : "";
+            if (e.getErrorCode() == 1062 || msg.toLowerCase().contains("duplicate") || msg.toLowerCase().contains("doublon")) {
+                errorLabel.setText("Doublon : ce participant est déjà inscrit à cette formation.");
+            } else {
+                errorLabel.setText(msg);
+            }
         }
     }
 

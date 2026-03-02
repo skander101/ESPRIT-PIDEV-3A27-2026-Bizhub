@@ -4,6 +4,7 @@ import com.bizhub.formation.model.Formation;
 import com.bizhub.participation.model.Participation;
 import com.bizhub.user.model.User;
 import com.bizhub.common.service.*;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.chart.PieChart;
@@ -211,11 +212,13 @@ public class AdminDashboardController {
     }
 
     private void showError(String msg) {
-        Alert a = new Alert(Alert.AlertType.ERROR);
-        a.setTitle("Error");
-        a.setHeaderText("Operation failed");
-        a.setContentText(msg);
-        a.showAndWait();
+        Platform.runLater(() -> {
+            Alert a = new Alert(Alert.AlertType.ERROR);
+            a.setTitle("Error");
+            a.setHeaderText("Operation failed");
+            a.setContentText(msg);
+            a.show();
+        });
     }
 
     private static String nullToEmpty(String s) {

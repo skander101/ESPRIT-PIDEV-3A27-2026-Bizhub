@@ -29,5 +29,15 @@ public final class AppSession {
     public static boolean isAdmin() {
         return isAuthenticated() && "admin".equalsIgnoreCase(currentUser.getUserType());
     }
+
+    /** Utilisateur formateur (peut créer/éditer des formations). */
+    public static boolean isFormateur() {
+        return isAuthenticated() && "formateur".equalsIgnoreCase(currentUser.getUserType());
+    }
+
+    /** Admin ou formateur : peut gérer les formations (ajout, édition). */
+    public static boolean canManageFormations() {
+        return isAdmin() || isFormateur();
+    }
 }
 

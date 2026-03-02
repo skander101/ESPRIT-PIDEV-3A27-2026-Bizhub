@@ -12,9 +12,17 @@
  * with smooth curves and subtle depth effects.
  */
 
+/* Root: set both background and looked-up colors Modena expects (avoids ClassCastException in JavaFX 21) */
 .root {
     -fx-font-family: "Inter", "Segoe UI", "System";
     -fx-background-color: #0A192F;
+    -fx-base: #172A45;
+    -fx-background: #0A192F;
+    -fx-control-inner-background: #172A45;
+    -fx-text-inner-color: #FFFFFF;
+    -fx-text-background-color: #FFFFFF;
+    -fx-accent: #E8A93A;
+    -fx-focus-color: #E8A93A;
 }
 
 /* Color Reference (for maintainability):
@@ -170,6 +178,44 @@
 .btn-primary:pressed {
     -fx-background-color: #C78F2E;
     -fx-effect: dropshadow(gaussian, rgba(232, 169, 58, 0.25), 4, 0.15, 0, 2);
+}
+
+/* Formulaire paiement "Payez en ligne" */
+.payment-form .label {
+    -fx-text-fill: rgba(255, 255, 255, 0.9);
+    -fx-font-size: 13px;
+}
+.pay-online-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-fill: #FFFFFF;
+}
+.secure-badge {
+    -fx-text-fill: #22c55e;
+    -fx-font-size: 12px;
+}
+.card-logos {
+    -fx-padding: 4 0 8 0;
+}
+.card-logo {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-background-radius: 6;
+    -fx-padding: 6 12;
+    -fx-font-size: 11px;
+    -fx-text-fill: rgba(255, 255, 255, 0.85);
+}
+.btn-pay-primary {
+    -fx-background-color: linear-gradient(to bottom, #3b82f6, #2563eb);
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 12 24;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+.btn-pay-primary:hover {
+    -fx-background-color: linear-gradient(to bottom, #60a5fa, #3b82f6);
+    -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.5), 10, 0.25, 0, 4);
 }
 
 /* Bouton Participer bien visible sur la page détail formation */

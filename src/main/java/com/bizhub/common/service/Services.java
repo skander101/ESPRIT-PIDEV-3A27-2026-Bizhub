@@ -1,10 +1,11 @@
 package com.bizhub.common.service;
 
-import com.bizhub.formation.dao.FormationDAO;
 import com.bizhub.common.dao.MyDatabase;
+import com.bizhub.formation.dao.FormationDAO;
 import com.bizhub.participation.dao.ParticipationDAO;
 import com.bizhub.review.dao.ReviewDAO;
 import com.bizhub.user.service.UserService;
+import com.bizhub.payment.PaymentService;
 
 import java.sql.Connection;
 
@@ -22,6 +23,9 @@ public final class Services {
     private static AuthService authService;
     private static ValidationService validationService;
     private static ReportService reportService;
+    private static PaymentService paymentService;
+    private static EmailService emailService;
+    private static GoogleMeetService googleMeetService;
 
     private Services() {
     }
@@ -80,5 +84,26 @@ public final class Services {
             reportService = new ReportService(users(), reviews());
         }
         return reportService;
+    }
+
+    public static synchronized PaymentService payments() {
+        if (paymentService == null) {
+            paymentService = new PaymentService();
+        }
+        return paymentService;
+    }
+
+    public static synchronized EmailService email() {
+        if (emailService == null) {
+            emailService = new EmailService();
+        }
+        return emailService;
+    }
+
+    public static synchronized GoogleMeetService googleMeet() {
+        if (googleMeetService == null) {
+            googleMeetService = new GoogleMeetService();
+        }
+        return googleMeetService;
     }
 }

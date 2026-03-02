@@ -11,6 +11,8 @@ public class Formation {
     private LocalDate startDate;
     private LocalDate endDate;
     private BigDecimal cost;
+    private String lieu;
+    private boolean enLigne;
 
     public Formation() {
     }
@@ -77,6 +79,22 @@ public class Formation {
         this.cost = cost;
     }
 
+    public String getLieu() {
+        return lieu;
+    }
+
+    public void setLieu(String lieu) {
+        this.lieu = lieu;
+    }
+
+    public boolean isEnLigne() {
+        return enLigne;
+    }
+
+    public void setEnLigne(boolean enLigne) {
+        this.enLigne = enLigne;
+    }
+
     @Override
     public String toString() {
         return "Formation{" +
@@ -86,6 +104,8 @@ public class Formation {
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
                 ", cost=" + cost +
+                ", lieu='" + lieu + '\'' +
+                ", enLigne=" + enLigne +
                 "}";
     }
 }

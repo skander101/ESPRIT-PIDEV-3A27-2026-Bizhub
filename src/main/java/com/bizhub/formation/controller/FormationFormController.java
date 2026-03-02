@@ -1,15 +1,21 @@
 package com.bizhub.formation.controller;
 
+import com.bizhub.common.service.Services;
 import com.bizhub.formation.model.Formation;
 import com.bizhub.user.model.User;
-import com.bizhub.common.service.Services;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
 import javafx.stage.Stage;
+import netscape.javascript.JSObject;
 
 import java.math.BigDecimal;
+import java.net.URL;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
@@ -24,6 +30,9 @@ public class FormationFormController {
     @FXML private DatePicker endDatePicker;
     @FXML private TextField costField;
     @FXML private TextArea descriptionArea;
+    @FXML private TextField lieuField;
+    @FXML private CheckBox enLigneCheck;
+    @FXML private WebView mapView;
 
     @FXML private Label errorLabel;
     @FXML private Button saveButton;
@@ -62,6 +71,15 @@ public class FormationFormController {
         startDatePicker.setValue(LocalDate.now());
         endDatePicker.setValue(LocalDate.now().plusDays(1));
         costField.setText("0.00");
+        enLigneCheck.setSelected(false);
+
+        setupMap();
+
+        // Masquer / afficher la carte en fonction de "En ligne"
+        enLigneCheck.selectedProperty().addListener((obs, oldV, isSelected) -> {
+            updateMapVisibility(!isSelected);
+        });
+        updateMapVisibility(!enLigneCheck.isSelected());
     }
 
     public void setEditing(Formation f, Runnable onSaved) {
@@ -77,6 +95,9 @@ public class FormationFormController {
             startDatePicker.setValue(f.getStartDate());
             endDatePicker.setValue(f.getEndDate());
             costField.setText(f.getCost() == null ? "0.00" : f.getCost().toPlainString());
+            lieuField.setText(f.getLieu());
+            enLigneCheck.setSelected(f.isEnLigne());
+            updateMapVisibility(!f.isEnLigne());
 
             // select trainer if present
             for (User u : trainerBox.getItems()) {
@@ -96,6 +117,7 @@ public class FormationFormController {
         User trainer = trainerBox.getValue();
         LocalDate start = startDatePicker.getValue();
         LocalDate end = endDatePicker.getValue();
+        String lieu = lieuField.getText();
 
         if (title == null || title.isBlank()) {
             errorLabel.setText("Title is required");
@@ -117,6 +139,10 @@ public class FormationFormController {
             errorLabel.setText("End date must be after start date");
             return;
         }
+        if (lieu == null || lieu.isBlank()) {
+            errorLabel.setText("Lieu is required");
+            return;
+        }
 
         BigDecimal cost;
         try {
@@ -136,6 +162,8 @@ public class FormationFormController {
             editing.setEndDate(end);
             editing.setCost(cost);
             editing.setDescription(descriptionArea.getText());
+            editing.setLieu(lieu.trim());
+            editing.setEnLigne(enLigneCheck.isSelected());
 
             if (!isEdit) {
                 Services.formations().create(editing);
@@ -161,5 +189,46 @@ public class FormationFormController {
     private void close() {
         Stage stage = (Stage) saveButton.getScene().getWindow();
         stage.close();
+    }
+
+    private void updateMapVisibility(boolean show) {
+        if (mapView != null) {
+            mapView.setVisible(show);
+            mapView.setManaged(show);
+        }
+    }
+
+    private void setupMap() {
+        if (mapView == null) {
+            return;
+        }
+        WebEngine engine = mapView.getEngine();
+        URL url = getClass().getResource("/com/bizhub/web/formation-map.html");
+        if (url != null) {
+            engine.load(url.toExternalForm());
+        }
+
+        engine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
+            if (newState == Worker.State.SUCCEEDED) {
+                Object windowObj = engine.executeScript("window");
+                if (windowObj instanceof JSObject window) {
+                    window.setMember("java", new MapBridge());
+                }
+            }
+        });
+    }
+
+    /**
+     * Passerelle appelée par le JavaScript de la carte.
+     * Met à jour le champ "lieu" avec "lat,lng".
+     */
+    public class MapBridge {
+        public void onLocationSelected(double lat, double lng) {
+            Platform.runLater(() -> {
+                if (lieuField != null) {
+                    lieuField.setText(lat + ", " + lng);
+                }
+            });
+        }
     }
 }
