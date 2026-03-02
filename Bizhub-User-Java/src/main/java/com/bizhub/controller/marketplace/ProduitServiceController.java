@@ -16,6 +16,7 @@ import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -37,6 +38,16 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.bizhub.controller.marketplace.InvestorStatsApiServer;
+import com.bizhub.model.marketplace.StatsPoint;
+import com.google.gson.Gson;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.LocalDate;
 /**
  * ProduitServiceController
  *
@@ -90,6 +101,16 @@ public class ProduitServiceController {
     // ── FXML Filtres ──────────────────────────────────────────
     @FXML private TextField       tfSearchNom;
     @FXML private ComboBox<String> cbFilterCategorie;
+
+    // ── Stats chart (API) ───────────────────────────────────
+    @FXML
+    private LineChart<String, Number> statsChart;
+
+    @FXML private Label kpiVentesVal;   // ✅ KPI total ventes
+    @FXML private Label kpiAchatsVal;   // ✅ KPI total achats
+
+    @FXML
+    private ComboBox<String> periodeCombo;
 
     // ── FXML KPI ──────────────────────────────────────────────
     @FXML private javafx.scene.text.Text kpiTotalProduits;
@@ -322,6 +343,24 @@ public class ProduitServiceController {
 
         refreshProduits();
         if (isInvestisseur) refreshCommandes();
+
+        // ── Stats chart init ──────────────────────────────────
+        if (periodeCombo != null) {
+            periodeCombo.getItems().setAll("30 jours", "90 jours", "1 an");
+            if (periodeCombo.getValue() == null) periodeCombo.setValue("30 jours");
+            periodeCombo.valueProperty().addListener((obs, o, n) -> loadStatsChart());
+        }
+
+        // ✅ FIX 1 : Démarrer le serveur API stats si pas encore démarré
+        if (isInvestisseur) {
+            try {
+                int port = InvestorStatsApiServer.start();
+                LOGGER.info("✅ InvestorStatsApiServer démarré sur port " + port);
+            } catch (Exception e) {
+                LOGGER.warning("⚠ InvestorStatsApiServer échec démarrage : " + e.getMessage());
+            }
+            loadStatsChart();
+        }
     }
 
     // =====================================================
@@ -1145,4 +1184,205 @@ public class ProduitServiceController {
 
     private static String nz(String s)   { return s == null ? "" : s.trim(); }
     private static String safe(String s) { return s == null ? "" : s.trim(); }
+
+    // =====================================================
+// STATS CHART (Ventes / Achats) via API
+// =====================================================
+
+    @FXML
+    private void onRefreshStats() {
+        loadStatsChart();
+    }
+
+    private void loadStatsChart() {
+        try {
+            if (statsChart == null) return;
+
+            var me = AppSession.getCurrentUser();
+            if (me == null) { statsChart.getData().clear(); return; }
+
+            int investorId = me.getUserId();
+
+            // ── Période ────────────────────────────────────────────────────
+            int days = 30;
+            String mode = "daily";
+            if (periodeCombo != null) {
+                String val = periodeCombo.getValue();
+                if ("90 jours".equals(val))  { days = 90;  mode = "weekly"; }
+                else if ("1 an".equals(val)) { days = 365; mode = "monthly"; }
+                else if (val == null || val.isBlank()) periodeCombo.setValue("30 jours");
+            }
+
+            LocalDate from = LocalDate.now().minusDays(days);
+            LocalDate to   = LocalDate.now();
+
+            // ── Serveur API ────────────────────────────────────────────────
+            int port = InvestorStatsApiServer.getActivePort();
+            if (port <= 0) {
+                try { port = InvestorStatsApiServer.start(); }
+                catch (Exception ex) {
+                    LOGGER.warning("InvestorStatsApiServer: " + ex.getMessage());
+                    statsChart.getData().clear(); return;
+                }
+            }
+
+            // ── Appel HTTP async pour ne pas bloquer le thread JavaFX ──────
+            final int fPort = port;
+            final LocalDate fFrom = from, fTo = to;
+            final String fMode = mode;
+            final int fId = investorId;
+
+            new Thread(() -> {
+                try {
+                    String url = "http://localhost:" + fPort + "/api/investor/stats"
+                            + "?investorId=" + fId + "&from=" + fFrom + "&to=" + fTo;
+
+                    java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+                    java.net.http.HttpResponse<String> resp = client.send(
+                            java.net.http.HttpRequest.newBuilder().uri(java.net.URI.create(url)).GET().build(),
+                            java.net.http.HttpResponse.BodyHandlers.ofString());
+
+                    String body = resp.body() == null ? "" : resp.body().trim();
+                    if (!body.startsWith("[")) {
+                        LOGGER.warning("Stats API: " + body);
+                        Platform.runLater(() -> statsChart.getData().clear());
+                        return;
+                    }
+
+                    com.google.gson.Gson gson = new com.google.gson.GsonBuilder()
+                            .registerTypeAdapter(LocalDate.class,
+                                    (com.google.gson.JsonDeserializer<LocalDate>)
+                                            (json, type, ctx) -> LocalDate.parse(json.getAsString()))
+                            .create();
+
+                    StatsPoint[] data = gson.fromJson(body, StatsPoint[].class);
+                    if (data == null || data.length == 0) {
+                        Platform.runLater(() -> statsChart.getData().clear());
+                        return;
+                    }
+
+                    // ── Agrégation selon la période ────────────────────────
+                    java.util.LinkedHashMap<String, double[]> buckets = new java.util.LinkedHashMap<>();
+                    // [0]=montantConf [1]=montantAnn [2]=nbConf [3]=nbAnn
+
+                    java.util.function.Function<LocalDate, String> keyFn;
+                    if ("monthly".equals(fMode)) {
+                        keyFn = d -> d.format(java.time.format.DateTimeFormatter.ofPattern("MMM yy", java.util.Locale.FRENCH));
+                    } else if ("weekly".equals(fMode)) {
+                        keyFn = d -> d.with(java.time.DayOfWeek.MONDAY)
+                                .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM"));
+                    } else {
+                        keyFn = d -> d.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM"));
+                    }
+
+                    for (StatsPoint p : data) {
+                        if (p.getDate() == null) continue;
+                        String key = keyFn.apply(p.getDate());
+                        double[] acc = buckets.computeIfAbsent(key, k -> new double[4]);
+                        acc[0] += p.getMontantConf() == null ? 0 : p.getMontantConf().doubleValue();
+                        acc[1] += p.getMontantAnn()  == null ? 0 : p.getMontantAnn().doubleValue();
+                        acc[2] += p.getConfirmees();
+                        acc[3] += p.getAnnulees();
+                    }
+
+                    XYChart.Series<String, Number> confSeries = new XYChart.Series<>();
+                    confSeries.setName("Confirmées");
+                    XYChart.Series<String, Number> annSeries = new XYChart.Series<>();
+                    annSeries.setName("Annulées");
+
+                    double[] totals = {0, 0, 0, 0};
+                    for (var e : buckets.entrySet()) {
+                        double[] v = e.getValue();
+                        confSeries.getData().add(new XYChart.Data<>(e.getKey(), v[0]));
+                        annSeries.getData().add(new XYChart.Data<>(e.getKey(), v[1]));
+                        totals[0] += v[0]; totals[1] += v[1];
+                        totals[2] += v[2]; totals[3] += v[3];
+                    }
+
+                    final double[] ft = totals;
+                    Platform.runLater(() -> {
+                        statsChart.getData().clear();
+                        statsChart.getData().addAll(confSeries, annSeries);
+
+                        // KPIs
+                        if (kpiVentesVal != null)
+                            kpiVentesVal.setText(String.format("%,.0f TND%n(%d cmd)", ft[0], (int)ft[2]));
+                        if (kpiAchatsVal != null)
+                            kpiAchatsVal.setText(String.format("%,.0f TND%n(%d cmd)", ft[1], (int)ft[3]));
+
+                        // Style après rendu
+                        javafx.animation.PauseTransition pt = new javafx.animation.PauseTransition(
+                                javafx.util.Duration.millis(120));
+                        pt.setOnFinished(ev -> styleChart(confSeries, annSeries));
+                        pt.play();
+                    });
+
+                } catch (Exception ex) {
+                    LOGGER.warning("loadStatsChart async: " + ex.getMessage());
+                    Platform.runLater(() -> statsChart.getData().clear());
+                }
+            }, "stats-loader").start();
+
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "loadStatsChart: " + e.getMessage(), e);
+        }
+    }
+
+    private void styleChart(XYChart.Series<String, Number> conf,
+                            XYChart.Series<String, Number> ann) {
+        try {
+            // ── Lignes ────────────────────────────────────────────────────
+            if (conf.getNode() != null)
+                conf.getNode().setStyle("-fx-stroke:#10B981; -fx-stroke-width:2.5px;");
+            if (ann.getNode() != null)
+                ann.getNode().setStyle("-fx-stroke:#EF4444; -fx-stroke-width:2px;" +
+                        "-fx-stroke-dash-array:6 4;");
+
+            // ── Points confirmées ──────────────────────────────────────────
+            for (XYChart.Data<String, Number> d : conf.getData()) {
+                if (d.getNode() == null) continue;
+                d.getNode().setStyle(
+                        "-fx-background-color:#10B981,#0f1824;" +
+                                "-fx-background-radius:5; -fx-padding:4;");
+                String tip = d.getXValue() + "\n✅ Confirmées : "
+                        + String.format("%,.2f TND", d.getYValue().doubleValue());
+                javafx.scene.control.Tooltip t = new javafx.scene.control.Tooltip(tip);
+                t.setStyle("-fx-background-color:#1a2235; -fx-text-fill:white;" +
+                        "-fx-font-size:11px; -fx-background-radius:8; -fx-padding:6 10;");
+                javafx.scene.control.Tooltip.install(d.getNode(), t);
+            }
+
+            // ── Points annulées ────────────────────────────────────────────
+            for (XYChart.Data<String, Number> d : ann.getData()) {
+                if (d.getNode() == null) continue;
+                d.getNode().setStyle(
+                        "-fx-background-color:#EF4444,#0f1824;" +
+                                "-fx-background-radius:5; -fx-padding:4;");
+                String tip = d.getXValue() + "\n❌ Annulées : "
+                        + String.format("%,.2f TND", d.getYValue().doubleValue());
+                javafx.scene.control.Tooltip t = new javafx.scene.control.Tooltip(tip);
+                t.setStyle("-fx-background-color:#1a2235; -fx-text-fill:white;" +
+                        "-fx-font-size:11px; -fx-background-radius:8; -fx-padding:6 10;");
+                javafx.scene.control.Tooltip.install(d.getNode(), t);
+            }
+
+            // ── Fond + grilles ────────────────────────────────────────────
+            javafx.scene.Node plot = statsChart.lookup(".chart-plot-background");
+            if (plot != null) plot.setStyle("-fx-background-color:rgba(255,255,255,0.02);" +
+                    "-fx-background-radius:8;");
+
+            statsChart.lookupAll(".chart-horizontal-grid-lines").forEach(n ->
+                    n.setStyle("-fx-stroke:rgba(255,255,255,0.05); -fx-stroke-dash-array:3 5;"));
+            statsChart.lookupAll(".chart-vertical-grid-lines").forEach(n ->
+                    n.setStyle("-fx-stroke:transparent;"));
+
+            // ── Légende ────────────────────────────────────────────────────
+            statsChart.lookupAll(".chart-legend").forEach(n ->
+                    n.setStyle("-fx-background-color:rgba(26,34,53,0.85);" +
+                            "-fx-border-color:rgba(255,255,255,0.08);" +
+                            "-fx-border-radius:8; -fx-background-radius:8;" +
+                            "-fx-padding:4 10;"));
+
+        } catch (Exception ignore) {}
+    }
 }

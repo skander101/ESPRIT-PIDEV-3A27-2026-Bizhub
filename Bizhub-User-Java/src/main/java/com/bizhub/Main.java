@@ -1,15 +1,14 @@
 package com.bizhub;
 
+import com.bizhub.controller.marketplace.InvestorStatsApiServer;
 import com.bizhub.controller.marketplace.StripeWebhookServer;
 import com.bizhub.model.services.common.config.EnvLoader;
 import com.bizhub.model.services.common.service.NavigationService;
 import com.bizhub.model.services.marketplace.payment.StripeGatewayClient;
-
 import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import java.net.URL;
@@ -35,9 +34,17 @@ public class Main extends Application {
             LOGGER.info("✅ STRIPE_WEBHOOK_SECRET chargé (whsec_...).");
         }
 
-        // 3) Démarrer webhook server (le serveur gère lui-même les ports libres)
+        // 3) Démarrer webhook + API stats
         try {
             int port = StripeWebhookServer.start(webhookSecret);
+
+            try {
+                int apiPort = InvestorStatsApiServer.start();
+                LOGGER.info("✅ InvestorStatsApiServer démarré sur : http://localhost:" + apiPort + "/api/investor/stats");
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "⚠ Impossible de démarrer InvestorStatsApiServer : " + e.getMessage(), e);
+            }
+
             if (port > 0) {
                 LOGGER.info("✅ StripeWebhookServer démarré sur : http://localhost:" + port + "/webhook/stripe");
             }
@@ -50,7 +57,6 @@ public class Main extends Application {
     public void start(Stage stage) throws Exception {
         LOGGER.info("✅ Main.start() appelé — préparation UI...");
 
-        // 1) Fenêtre visible immédiatement
         StackPane boot = new StackPane(new javafx.scene.control.Label("Chargement BizHub..."));
         Scene scene = new Scene(boot, 1000, 700);
 
@@ -71,7 +77,6 @@ public class Main extends Application {
         stage.requestFocus();
         LOGGER.info("✅ stage.show() exécuté — fenêtre affichée (boot screen).");
 
-        // 2) Charger FXML après affichage
         javafx.application.Platform.runLater(() -> {
             try {
                 LOGGER.info("⏳ Chargement login.fxml...");
@@ -114,12 +119,21 @@ public class Main extends Application {
 
     @Override
     public void stop() throws Exception {
+        // ✅ stop propre : webhook + API stats
         try {
             StripeWebhookServer.stop();
             LOGGER.info("✅ StripeWebhookServer stoppé.");
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "⚠ Erreur stop : " + e.getMessage(), e);
+            LOGGER.log(Level.WARNING, "⚠ Erreur stop StripeWebhookServer : " + e.getMessage(), e);
         }
+
+        try {
+            InvestorStatsApiServer.stop();
+            LOGGER.info("✅ InvestorStatsApiServer stoppé.");
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "⚠ Erreur stop InvestorStatsApiServer : " + e.getMessage(), e);
+        }
+
         super.stop();
     }
 
