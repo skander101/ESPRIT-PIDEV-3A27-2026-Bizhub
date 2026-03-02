@@ -939,3 +939,68 @@
     -fx-text-fill: rgba(232, 169, 58, 0.55);
     -fx-font-size: 11px;
 }
+.commande-card {
+    -fx-padding: 18 22;
+}
+/* badges */
+.badge-danger {
+    -fx-background-color: #EF4444;
+    -fx-background-radius: 999;
+    -fx-text-fill: white;
+    -fx-font-size: 10px;
+    -fx-font-weight: 900;
+    -fx-padding: 2 6;
+}
+
+/* bouton warning (panier) */
+.btn-warning {
+    -fx-background-color: linear-gradient(to right, #F59E0B, #D97706);
+    -fx-text-fill: white;
+    -fx-font-weight: 800;
+    -fx-background-radius: 12;
+    -fx-padding: 8 12;
+    -fx-cursor: hand;
+}
+
+/* bouton success (payer) */
+.btn-success {
+    -fx-background-color: linear-gradient(to right, #10B981, #059669);
+    -fx-text-fill: white;
+    -fx-font-weight: 900;
+    -fx-font-size: 14px;
+    -fx-background-radius: 14;
+    -fx-padding: 14 18;
+    -fx-cursor: hand;
+}
+
+/* bloc paiement comme carte */
+.payment-card {
+    -fx-background-color: rgba(232,169,58,0.08);
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(232,169,58,0.35);
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-padding: 12;
+}
+
+.payment-icon {
+    -fx-text-fill: #E8A93A;
+    -fx-font-weight: 900;
+    -fx-font-size: 14px;
+}
+
+.payment-text {
+    -fx-text-fill: #E8A93A;
+    -fx-font-weight: 800;
+    -fx-font-size: 12px;
+}
+
+/* messages inline sous champs */
+.inline-msg {
+    -fx-padding: 2 0 0 0;
+}
+
+/* progress accent */
+.progress-success {
+    -fx-accent: #10B981;
+}

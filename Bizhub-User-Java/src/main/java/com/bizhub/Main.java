@@ -37,9 +37,10 @@ public class Main extends Application {
 
         // 3) Démarrer webhook server (le serveur gère lui-même les ports libres)
         try {
-            StripeWebhookServer.start(webhookSecret);
-            // ⚠ Ne pas afficher un port fixe si le serveur change de port
-            LOGGER.info("✅ StripeWebhookServer démarré (voir le log StripeWebhookServer pour le port réel).");
+            int port = StripeWebhookServer.start(webhookSecret);
+            if (port > 0) {
+                LOGGER.info("✅ StripeWebhookServer démarré sur : http://localhost:" + port + "/webhook/stripe");
+            }
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "⚠ Impossible de démarrer StripeWebhookServer : " + e.getMessage(), e);
         }

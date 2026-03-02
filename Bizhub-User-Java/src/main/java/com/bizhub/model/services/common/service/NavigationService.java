@@ -28,7 +28,9 @@ public class NavigationService {
         FORMATIONS,
         REVIEWS,
         PROFILE,
-        MARKETPLACE
+        MARKETPLACE,
+        PANIER,
+        TRACKING
     }
 
     public static void setActiveNav(Node sidebarRoot, ActiveNav activeNav) {
@@ -47,6 +49,8 @@ public class NavigationService {
                 case REVIEWS -> t.contains("reviews");
                 case PROFILE -> t.contains("profile");
                 case MARKETPLACE -> t.contains("marketplace");
+                case PANIER -> t.contains("panier") || t.contains("cart");
+                case TRACKING -> t.contains("tracking") || t.contains("suivi");
             };
 
             if (match) n.getStyleClass().add("active");
@@ -58,7 +62,7 @@ public class NavigationService {
     private static final Duration MIN_OVERLAY_VISIBLE = Duration.millis(500);
 
     private final Stage stage;
-    private boolean navigating = false;
+    private volatile boolean navigating = false;
 
     public NavigationService(Stage stage) {
         this.stage = stage;
@@ -79,13 +83,18 @@ public class NavigationService {
     public void goToFormationDetails() { loadIntoStage("/com/bizhub/fxml/formation-details.fxml", 1200, 760); }
 
     // ====== MARKETPLACE ======
-    public void goToCommande()      { loadIntoStage("/com/bizhub/fxml/commande.fxml", 1300, 820); }
-    public void goToProduitService(){ loadIntoStage("/com/bizhub/fxml/produit_service.fxml", 1300, 820); }
-    public void goToMarketplace()   { goToCommande(); }
+    public void goToCommande()            { loadIntoStage("/com/bizhub/fxml/commande.fxml", 1300, 820); }
+    public void goToProduitService()      { loadIntoStage("/com/bizhub/fxml/produit_service.fxml", 1300, 820); }
+    public void goToMarketplace()         { goToCommande(); }
+    public void goToPanier()              { loadIntoStage("/com/bizhub/fxml/panier.fxml", 1300, 820); }
+    public void goToCommandeTracking()    { loadIntoStage("/com/bizhub/fxml/commande-tracking.fxml", 1300, 820); }
 
     // ================== CORE LOADER ==================
     private void loadIntoStage(String fxmlPath, double w, double h) {
-        if (navigating) return;
+        if (navigating) {
+            LOGGER.info("⛔ Navigation ignorée (déjà en cours): " + fxmlPath);
+            return;
+        }
         navigating = true;
 
         try {
@@ -106,7 +115,6 @@ public class NavigationService {
                 stage.setY(bounds.getMinY() + 50);
                 stage.setWidth(Math.min(1200, bounds.getWidth() - 100));
                 stage.setHeight(Math.min(800, bounds.getHeight() - 100));
-
                 stage.setFullScreen(false);
                 stage.setMaximized(false);
 
@@ -115,21 +123,26 @@ public class NavigationService {
                 stage.requestFocus();
 
                 LOGGER.info("✅ Scene affichée: " + fxmlPath);
+                navigating = false;
                 return;
             }
 
-            Parent currentRoot = null;
-            if (scene.getRoot() instanceof Parent) {
-                currentRoot = (Parent) scene.getRoot();
-            }            Node overlay = findOverlay(currentRoot);
+            Parent currentRoot = scene.getRoot();            Node overlay = findOverlay(currentRoot);
 
             // 2) Pas d’overlay → swap direct
             if (overlay == null) {
                 LOGGER.info("⏳ Swap root (no overlay): " + fxmlPath);
                 safeRunLater(() -> {
-                    Parent nextRoot = loadFxml(res);
-                    scene.setRoot(nextRoot);
-                    LOGGER.info("✅ Root swapped: " + fxmlPath);
+                    try {
+                        Parent nextRoot = loadFxml(res);
+                        scene.setRoot(nextRoot);
+                        LOGGER.info("✅ Root swapped: " + fxmlPath);
+                    } catch (RuntimeException ex) {
+                        LOGGER.log(Level.SEVERE, "Navigation error while loading " + fxmlPath, ex);
+                        showNavigationError("Navigation error", ex.getMessage());
+                    } finally {
+                        navigating = false;
+                    }
                 });
                 return;
             }
@@ -140,7 +153,10 @@ public class NavigationService {
             overlay.setOpacity(0.0);
             overlay.toFront();
 
-            ProgressBar progressBar = (ProgressBar) overlay.lookup(".loading-bar");
+            ProgressBar progressBar = null;
+            Node pbNode = overlay.lookup(".loading-bar");
+            if (pbNode instanceof ProgressBar pb) progressBar = pb;
+
             Timeline progressTimeline = null;
             if (progressBar != null) {
                 progressBar.setProgress(0.0);
@@ -148,21 +164,21 @@ public class NavigationService {
                         new KeyFrame(Duration.seconds(1),
                                 new KeyValue(progressBar.progressProperty(), 1.0))
                 );
+                progressTimeline.setCycleCount(1);
                 progressTimeline.play();
             }
+
+            Timeline finalProgressTimeline = progressTimeline;
 
             FadeTransition fadeIn = new FadeTransition(OVERLAY_FADE_IN, overlay);
             fadeIn.setFromValue(0.0);
             fadeIn.setToValue(1.0);
             fadeIn.setInterpolator(Interpolator.EASE_BOTH);
 
-            Timeline finalProgressTimeline = progressTimeline;
-
             fadeIn.setOnFinished(ev -> safeRunLater(() -> {
                 try {
                     LOGGER.info("⏳ Loading next root: " + fxmlPath);
                     Parent nextRoot = loadFxml(res);
-
                     scene.setRoot(nextRoot);
                     LOGGER.info("✅ Root swapped: " + fxmlPath);
 
@@ -182,10 +198,13 @@ public class NavigationService {
                         fadeOut.setOnFinished(done -> {
                             newOverlay.setVisible(false);
                             newOverlay.setManaged(false);
+                            navigating = false; // ✅ fin réelle de navigation
                         });
 
                         hold.setOnFinished(e2 -> fadeOut.play());
                         hold.play();
+                    } else {
+                        navigating = false;
                     }
 
                     if (finalProgressTimeline != null) finalProgressTimeline.stop();
@@ -193,7 +212,7 @@ public class NavigationService {
                 } catch (RuntimeException ex) {
                     LOGGER.log(Level.SEVERE, "Navigation error while loading " + fxmlPath, ex);
                     showNavigationError("Navigation error", ex.getMessage());
-                    throw ex;
+                    navigating = false;
                 }
             }));
 
@@ -202,9 +221,8 @@ public class NavigationService {
         } catch (RuntimeException ex) {
             LOGGER.log(Level.SEVERE, "Navigation error", ex);
             showNavigationError("Navigation error", ex.getMessage());
-            throw ex;
-        } finally {
             navigating = false;
+            throw ex;
         }
     }
 
@@ -221,13 +239,9 @@ public class NavigationService {
     }
 
     public static Parent loadFxmlSafe(String fxmlPath) {
-        try {
-            URL res = NavigationService.class.getResource(fxmlPath);
-            if (res == null) throw new IllegalStateException("Missing FXML: " + fxmlPath);
-            return loadFxml(res);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load " + fxmlPath + ": " + e.getMessage(), e);
-        }
+        URL res = NavigationService.class.getResource(fxmlPath);
+        if (res == null) throw new IllegalStateException("Missing FXML: " + fxmlPath);
+        return loadFxml(res);
     }
 
     public static Parent loadFxmlSafe(URL res) {
@@ -252,5 +266,8 @@ public class NavigationService {
             a.setContentText(msg == null ? "Unknown error" : msg);
             a.showAndWait();
         });
+    }
+    public void goToTracking() {
+        loadIntoStage("/com/bizhub/fxml/commande-tracking.fxml", 1300, 820);
     }
 }

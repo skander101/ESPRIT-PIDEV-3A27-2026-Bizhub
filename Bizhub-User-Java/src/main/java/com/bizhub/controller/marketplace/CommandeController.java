@@ -5,8 +5,10 @@ import com.bizhub.model.marketplace.CommandeJoinProduit;
 import com.bizhub.model.marketplace.CommandeRepository;
 import com.bizhub.model.marketplace.ProduitService;
 import com.bizhub.model.services.common.service.AppSession;
+import com.bizhub.model.services.common.service.NavigationService;
 import com.bizhub.model.services.common.ui.toastUtil;
 import com.bizhub.model.services.marketplace.CommandeService;
+import com.bizhub.model.services.marketplace.PanierService;
 import com.bizhub.model.services.marketplace.ProduitServiceService;
 import com.bizhub.model.services.marketplace.payment.PaymentResult;
 import com.bizhub.model.services.marketplace.payment.PaymentService;
@@ -23,6 +25,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 
@@ -55,6 +58,10 @@ public class CommandeController {
     @FXML private VBox boxAdd;
     @FXML private VBox boxManage;
     @FXML private Text titleForm;
+    @FXML private javafx.scene.layout.StackPane stackPanier;
+    @FXML private Button btnOuvrirPanier;
+    @FXML private Button btnTracking;          // ✅ bouton suivi commandes
+    @FXML private Label  lblBadgePanier;
 
     // ── Startup ─────────────────────────────────────────
     @FXML private ComboBox<ProduitService> cbProduit;
@@ -82,6 +89,7 @@ public class CommandeController {
     @FXML private VBox boxPaiement;
     @FXML private Label lblInfoPaiement;
     @FXML private Button btnPayer;
+    @FXML private Button btnFacture;           // ✅ télécharger facture PDF
     @FXML private ProgressBar progressPaiement;
     @FXML private HBox  hboxMsgPaiement;
     @FXML private Label iconMsgPaiement;
@@ -131,10 +139,12 @@ public class CommandeController {
     private final ObservableList<CommandeJoinProduit> masterData = FXCollections.observableArrayList();
     private FilteredList<CommandeJoinProduit> filteredData;
     private volatile boolean paying = false;
+    private volatile boolean adding = false; // ✅ guard anti-double commande
 
     // =====================================================
     // INITIALISATION
     // =====================================================
+
     @FXML
     public void initialize() {
 
@@ -213,12 +223,15 @@ public class CommandeController {
         boolean invest  = isInvestisseur();
 
         setVM(boxAdd, startup);
+        setVM(stackPanier, startup); // ✅ bouton panier visible startup seulement
         setVM(boxManage, invest);
+        setVM(btnTracking, startup || invest); // ✅ visible pour tous les rôles connectés
 
         setVM(lblFilterClient, invest);
         setVM(tfFilterClient, invest);
 
         if (titleForm != null) titleForm.setText(startup ? "Passer une commande" : "Gestion des commandes");
+        if (startup) refreshBadgePanier(); // ✅ badge panier
     }
 
     // =====================================================
@@ -275,8 +288,11 @@ public class CommandeController {
                     }
                     showOk(hboxMsgPaiement, iconMsgPaiement, lblMsgPaiement, null,
                             "Commande déjà payée ✅");
+                    // ✅ Afficher bouton facture si payée
+                    setVM(btnFacture, true);
                 } else {
                     animerPulse(btnPayer);
+                    setVM(btnFacture, false);
                 }
                 return;
             }
@@ -410,7 +426,8 @@ public class CommandeController {
             if (isStartup()) {
                 masterData.setAll(commandeService.getByClientJoinProduit(me.getUserId()));
             } else if (isInvestisseur()) {
-                masterData.setAll(commandeService.getAllJoinProduit());
+                // ✅ FIX : l'investisseur voit uniquement les commandes de SES produits
+                masterData.setAll(commandeService.getByOwnerJoinProduit(me.getUserId()));
             } else {
                 masterData.clear();
             }
@@ -429,12 +446,16 @@ public class CommandeController {
     // =====================================================
     @FXML
     private void onAjouter() {
+        // ✅ Guard anti-double submit (clic rapide / lag réseau)
+        if (adding) return;
+        adding = true;
+
         resetAllValidation();
 
         ProduitService produit = cbProduit != null ? cbProduit.getValue() : null;
         if (produit == null) {
             showErr(hboxValProduit, iconValProduit, lblValProduit, cbProduit, "Sélectionnez un produit.");
-            return;
+            adding = false; return;
         } else {
             showOk(hboxValProduit, iconValProduit, lblValProduit, cbProduit, "Produit sélectionné.");
         }
@@ -445,7 +466,7 @@ public class CommandeController {
             showOk(hboxValQte, iconValQte, lblValQte, tfQuantite, "Quantité valide.");
         } catch (IllegalArgumentException e) {
             showErr(hboxValQte, iconValQte, lblValQte, tfQuantite, e.getMessage());
-            return;
+            adding = false; return;
         }
 
         try {
@@ -464,11 +485,13 @@ public class CommandeController {
             clearStartupForm();
             refreshJoin();
 
-            showOk(hboxMsgAdd, iconMsgAdd, lblMsgAdd, null, "✓ Commande ajoutée avec succès !");
+            showOk(hboxMsgAdd, iconMsgAdd, lblMsgAdd, null, "✓ Commande directe créée ! (distinct du panier)");
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "onAjouter", e);
             showErr(hboxMsgAdd, iconMsgAdd, lblMsgAdd, null, e.getMessage());
+        } finally {
+            adding = false;
         }
     }
 
@@ -905,4 +928,134 @@ public class CommandeController {
 
     private void safeToastError(String msg) { try { toastUtil.error(msg); } catch (Exception ignore) {} }
     private void safeToastWarning(String msg) { try { toastUtil.warning(msg); } catch (Exception ignore) {} }
+    private void safeToastSuccess(String msg) { try { toastUtil.success(msg); } catch (Exception ignore) {} }
+
+    private int getCurrentUserId() {
+        var user = AppSession.getCurrentUser();
+        return user != null ? user.getUserId() : -1;
+    }
+    @FXML
+    public void onOuvrirPanier() {
+        try {
+            Stage stage = (Stage) tableCommandes.getScene().getWindow();
+            new NavigationService(stage).goToPanier();
+        } catch (Exception e) {
+            safeToastError("Erreur navigation panier : " + e.getMessage());
+        }
+    }
+
+    // ✅ Navigation vers la page de suivi des commandes (timeline + facture)
+    @FXML
+    public void onTrackerCommandes() {
+        try {
+            Stage stage = (Stage) tableCommandes.getScene().getWindow();
+            new NavigationService(stage).goToCommandeTracking();
+        } catch (Exception e) {
+            safeToastError("Erreur navigation tracking : " + e.getMessage());
+        }
+    }
+
+    // ✅ Télécharger la facture PDF de la commande sélectionnée
+    @FXML
+    public void onTelechargerFacture() {
+        CommandeJoinProduit sel = tableCommandes != null
+                ? tableCommandes.getSelectionModel().getSelectedItem() : null;
+
+        if (sel == null) {
+            safeToastError("Sélectionnez une commande.");
+            return;
+        }
+        if (!sel.isEstPayee()) {
+            safeToastError("La facture n'est disponible que pour les commandes payées.");
+            return;
+        }
+
+        if (btnFacture != null) {
+            btnFacture.setDisable(true);
+            btnFacture.setText("⏳ Génération...");
+        }
+
+        javafx.concurrent.Task<java.nio.file.Path> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected java.nio.file.Path call() throws Exception {
+                return new com.bizhub.model.services.marketplace.FactureService()
+                        .genererFacture(sel);
+            }
+            @Override
+            protected void succeeded() {
+                if (btnFacture != null) {
+                    btnFacture.setText("📄  Télécharger la facture");
+                    btnFacture.setDisable(false);
+                }
+                safeToastWarning("✅ Facture enregistrée dans Téléchargements/BizHub_Factures/");
+                // Ouvrir le PDF automatiquement
+                new Thread(() -> {
+                    try {
+                        if (java.awt.Desktop.isDesktopSupported())
+                            java.awt.Desktop.getDesktop().open(getValue().toFile());
+                    } catch (Exception ignore) {}
+                }, "open-pdf").start();
+            }
+            @Override
+            protected void failed() {
+                if (btnFacture != null) {
+                    btnFacture.setText("📄  Télécharger la facture");
+                    btnFacture.setDisable(false);
+                }
+                safeToastError("Erreur génération facture : " + getException().getMessage());
+                LOGGER.log(Level.SEVERE, "onTelechargerFacture", getException());
+            }
+        };
+        new Thread(task, "facture-gen").start();
+    }
+
+    /** Appelé dans initialize() et après chaque refreshJoin() */
+    private void refreshBadgePanier() {
+        if (!isStartup()) return;
+        try {
+            PanierService ps = new PanierService();
+            int nb = ps.getNbArticles(getCurrentUserId());
+            if (lblBadgePanier != null) {
+                lblBadgePanier.setText(nb > 0 ? String.valueOf(nb) : "");
+                lblBadgePanier.setVisible(nb > 0);
+                lblBadgePanier.setManaged(nb > 0);
+            }
+        } catch (Exception ignore) {}
+    }
+
+    /**
+     * ✅ Ajouter au panier — LIT TOUJOURS depuis cbProduit + tfQuantite.
+     * Ne jamais utiliser getQuantiteCommande() d'une ligne existante (peut être 0).
+     */
+    @FXML
+    public void onAjouterAuPanier() {
+        if (cbProduit == null || cbProduit.getValue() == null) {
+            safeToastWarning("Sélectionnez d'abord un produit dans la liste.");
+            return;
+        }
+        String qteText = tfQuantite != null ? tfQuantite.getText() : "";
+        if (qteText == null || qteText.isBlank()) {
+            safeToastWarning("Entrez une quantité avant d'ajouter au panier.");
+            return;
+        }
+        int idProduit;
+        int quantite;
+        try {
+            idProduit = cbProduit.getValue().getIdProduit();
+            quantite  = Integer.parseInt(qteText.trim());
+            if (quantite <= 0) throw new NumberFormatException();
+        } catch (NumberFormatException ex) {
+            safeToastWarning("Quantité invalide — entrez un entier > 0.");
+            return;
+        }
+        try {
+            PanierService ps = new PanierService();
+            ps.ajouter(getCurrentUserId(), idProduit, quantite);
+            refreshBadgePanier();
+            safeToastSuccess("\u2705 " + cbProduit.getValue().getNom()
+                    + " (x" + quantite + ") ajouté au panier !");
+        } catch (Exception e) {
+            safeToastError("Erreur panier : " + e.getMessage());
+        }
+    }
 }

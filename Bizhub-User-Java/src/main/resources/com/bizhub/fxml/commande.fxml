@@ -11,20 +11,38 @@
         xmlns:fx="http://javafx.com/fxml/1"
         fx:controller="com.bizhub.controller.marketplace.CommandeController">
 
-    <!-- LEFT : Sidebar -->
     <left>
         <fx:include source="user-sidebar.fxml"/>
     </left>
 
-    <!-- TOP : Title + Filters + KPI -->
+    <!-- ═════════════════════ TOPBAR (même look que Tracking) ═════════════════════ -->
     <top>
         <VBox spacing="12" styleClass="topbar">
-            <padding>
-                <Insets top="14" right="16" bottom="14" left="16"/>
-            </padding>
+            <padding><Insets top="14" right="16" bottom="14" left="16"/></padding>
 
-            <!-- Ligne 1 : Titre + Filtres -->
             <HBox alignment="CENTER_LEFT" spacing="12">
+
+                <!-- Panier (startup) -->
+                <StackPane fx:id="stackPanier" visible="false" managed="false">
+                    <Button fx:id="btnOuvrirPanier"
+                            text="🛒 Mon Panier"
+                            onAction="#onOuvrirPanier"
+                            styleClass="btn-primary"/>
+
+                    <Label fx:id="lblBadgePanier"
+                           text="0"
+                           visible="false" managed="false"
+                           styleClass="badge-danger"
+                           StackPane.alignment="TOP_RIGHT"/>
+                </StackPane>
+
+                <!-- Tracking -->
+                <Button fx:id="btnTracking"
+                        text="📦 Suivi de commandes"
+                        onAction="#onTrackerCommandes"
+                        visible="false" managed="false"
+                        styleClass="btn-secondary"/>
+
                 <Text text="Commandes" styleClass="h1"/>
                 <Pane HBox.hgrow="ALWAYS"/>
 
@@ -54,6 +72,10 @@
                     <Text fx:id="kpiConfirmee" styleClass="stat-value" text="0"/>
                 </VBox>
                 <VBox styleClass="stat-card" HBox.hgrow="ALWAYS" spacing="4" alignment="CENTER_LEFT">
+                    <Text styleClass="stat-title" text="Payées"/>
+                    <Text fx:id="kpiPayee" styleClass="stat-value" text="0"/>
+                </VBox>
+                <VBox styleClass="stat-card" HBox.hgrow="ALWAYS" spacing="4" alignment="CENTER_LEFT">
                     <Text styleClass="stat-title" text="Livrées"/>
                     <Text fx:id="kpiLivree" styleClass="stat-value" text="0"/>
                 </VBox>
@@ -62,67 +84,74 @@
                     <Text fx:id="kpiAnnulee" styleClass="stat-value" text="0"/>
                 </VBox>
             </HBox>
+
         </VBox>
     </top>
 
-    <!-- CENTER : Form (left) + Table (right) -->
+    <!-- ═════════════════════ CONTENT ═════════════════════ -->
     <center>
         <HBox spacing="16">
-            <padding>
-                <Insets top="14" right="16" bottom="16" left="16"/>
-            </padding>
+            <padding><Insets top="14" right="16" bottom="16" left="16"/></padding>
 
-            <!-- LEFT CARD : role-based form -->
+            <!-- LEFT CARD -->
             <VBox fx:id="cardForm" spacing="14" styleClass="card" prefWidth="380" minWidth="340">
                 <Text fx:id="titleForm" text="Passer une commande" styleClass="h2"/>
 
-                <!-- STARTUP : Ajouter / Supprimer + Paiement -->
-                <VBox fx:id="boxAdd" spacing="8">
+                <!-- STARTUP -->
+                <VBox fx:id="boxAdd" spacing="10">
 
                     <Label text="Produit / Service" styleClass="form-label"/>
                     <ComboBox fx:id="cbProduit" promptText="Choisir un produit..." maxWidth="1e9"/>
-                    <HBox fx:id="hboxValProduit" spacing="5" alignment="CENTER_LEFT"
-                          visible="false" managed="false">
+
+                    <HBox fx:id="hboxValProduit" spacing="6" alignment="CENTER_LEFT"
+                          visible="false" managed="false" styleClass="inline-msg">
                         <Label fx:id="iconValProduit" text=""/>
                         <Label fx:id="lblValProduit" text="" wrapText="true"/>
                     </HBox>
 
                     <Label text="Quantité" styleClass="form-label"/>
                     <TextField fx:id="tfQuantite" promptText="Nombre entier > 0"/>
-                    <HBox fx:id="hboxValQte" spacing="5" alignment="CENTER_LEFT"
-                          visible="false" managed="false">
+
+                    <HBox fx:id="hboxValQte" spacing="6" alignment="CENTER_LEFT"
+                          visible="false" managed="false" styleClass="inline-msg">
                         <Label fx:id="iconValQte" text=""/>
                         <Label fx:id="lblValQte" text="" wrapText="true"/>
                     </HBox>
 
-                    <Button fx:id="btnAjouter"
-                            text="✚  Ajouter la commande"
-                            onAction="#onAjouter"
-                            maxWidth="1e9"
-                            styleClass="btn-primary"/>
+                    <!-- Boutons -->
+                    <HBox spacing="8">
+                        <Button fx:id="btnAjouter"
+                                text="⚡ Commander direct"
+                                onAction="#onAjouter"
+                                HBox.hgrow="ALWAYS" maxWidth="1e9"
+                                styleClass="btn-primary"/>
+                        <Button fx:id="btnAjouterPanier"
+                                text="🛒 + Panier"
+                                onAction="#onAjouterAuPanier"
+                                HBox.hgrow="ALWAYS" maxWidth="1e9"
+                                styleClass="btn-warning"/>
+                    </HBox>
 
-                    <HBox fx:id="hboxMsgAdd" spacing="5" alignment="CENTER_LEFT"
-                          visible="false" managed="false">
+                    <Label text="⚡ Direct = 1 commande immédiate  |  🛒 Panier = regrouper plusieurs produits"
+                           styleClass="muted" wrapText="true"/>
+
+                    <HBox fx:id="hboxMsgAdd" spacing="6" alignment="CENTER_LEFT"
+                          visible="false" managed="false" styleClass="inline-msg">
                         <Label fx:id="iconMsgAdd" text=""/>
                         <Label fx:id="lblMsgAdd" text="" wrapText="true"/>
                     </HBox>
 
-                    <Separator opacity="0.4"/>
+                    <Separator opacity="0.35"/>
 
-                    <!-- PAIEMENT : visible si commande confirmée sélectionnée -->
-                    <VBox fx:id="boxPaiement" spacing="8" visible="false" managed="false"
-                          style="-fx-background-color:rgba(16,185,129,0.08);
-                                 -fx-background-radius:14;
-                                 -fx-border-color:rgba(16,185,129,0.35);
-                                 -fx-border-radius:14;
-                                 -fx-border-width:1;
-                                 -fx-padding:12;">
+                    <!-- PAIEMENT -->
+                    <VBox fx:id="boxPaiement" spacing="10"
+                          visible="false" managed="false"
+                          styleClass="payment-card">
 
                         <HBox spacing="8" alignment="CENTER_LEFT">
-                            <Label text="✔"
-                                   style="-fx-text-fill:#10B981;-fx-font-weight:900;-fx-font-size:14;"/>
+                            <Label text="✔" styleClass="payment-icon"/>
                             <Label fx:id="lblInfoPaiement" text=""
-                                   style="-fx-text-fill:#10B981;-fx-font-weight:700;-fx-font-size:12;"
+                                   styleClass="payment-text"
                                    wrapText="true"/>
                         </HBox>
 
@@ -130,40 +159,38 @@
                                 text="💳  Payer cette commande"
                                 onAction="#onPayerCommande"
                                 maxWidth="1e9"
-                                style="-fx-background-color:linear-gradient(to right,#10B981,#059669);
-                                       -fx-text-fill:white;
-                                       -fx-font-weight:900;
-                                       -fx-font-size:14;
-                                       -fx-background-radius:14;
-                                       -fx-padding:14 18;
-                                       -fx-cursor:hand;
-                                       -fx-effect:dropshadow(gaussian,rgba(16,185,129,0.45),12,0.3,0,4);"/>
+                                styleClass="btn-success"/>
 
-                        <ProgressBar fx:id="progressPaiement"
-                                     maxWidth="1e9"
-                                     progress="0"
+                        <ProgressBar fx:id="progressPaiement" maxWidth="1e9" progress="0"
                                      visible="false" managed="false"
-                                     style="-fx-accent:#10B981;"/>
+                                     styleClass="progress-success"/>
 
-                        <HBox fx:id="hboxMsgPaiement" spacing="5" alignment="CENTER_LEFT"
-                              visible="false" managed="false">
+                        <HBox fx:id="hboxMsgPaiement" spacing="6" alignment="CENTER_LEFT"
+                              visible="false" managed="false" styleClass="inline-msg">
                             <Label fx:id="iconMsgPaiement" text=""/>
                             <Label fx:id="lblMsgPaiement" text="" wrapText="true"/>
                         </HBox>
+
+                        <Button fx:id="btnFacture"
+                                text="📄  Télécharger la facture"
+                                onAction="#onTelechargerFacture"
+                                maxWidth="1e9"
+                                visible="false" managed="false"
+                                styleClass="btn-secondary"/>
                     </VBox>
 
                     <!-- SUPPRESSION -->
                     <Label text="Supprimer une commande" styleClass="form-label"/>
-                    <Label text="Sélectionnez une ligne en attente puis cliquez :"
-                           styleClass="muted" wrapText="true"/>
+                    <Label text="Sélectionnez une ligne en attente puis cliquez :" styleClass="muted" wrapText="true"/>
+
                     <Button fx:id="btnSupprimer"
                             text="🗑  Supprimer"
                             onAction="#onSupprimer"
                             maxWidth="1e9"
                             styleClass="btn-danger"/>
 
-                    <HBox fx:id="hboxMsgDel" spacing="5" alignment="CENTER_LEFT"
-                          visible="false" managed="false">
+                    <HBox fx:id="hboxMsgDel" spacing="6" alignment="CENTER_LEFT"
+                          visible="false" managed="false" styleClass="inline-msg">
                         <Label fx:id="iconMsgDel" text=""/>
                         <Label fx:id="lblMsgDel" text="" wrapText="true"/>
                     </HBox>
@@ -172,20 +199,19 @@
                            styleClass="muted" wrapText="true"/>
                 </VBox>
 
-                <!-- INVESTISSEUR : Gérer -->
-                <VBox fx:id="boxManage" spacing="8" visible="false" managed="false">
-
+                <!-- INVESTISSEUR -->
+                <VBox fx:id="boxManage" spacing="10" visible="false" managed="false">
                     <Label text="Commande sélectionnée" styleClass="form-label"/>
                     <Label text="Cliquez sur une ligne dans le tableau pour la sélectionner."
                            styleClass="muted" wrapText="true"/>
 
                     <HBox fx:id="hboxSelectedInfo" spacing="8" alignment="CENTER_LEFT"
-                          visible="false" managed="false">
-                        <Label text="▶" style="-fx-text-fill:#E8A93A;"/>
+                          visible="false" managed="false" styleClass="inline-msg">
+                        <Label text="▶" styleClass="hint"/>
                         <Label fx:id="lblSelectedInfo" text="" styleClass="hint" wrapText="true"/>
                     </HBox>
 
-                    <Separator opacity="0.4"/>
+                    <Separator opacity="0.35"/>
 
                     <Button fx:id="btnConfirmer"
                             text="✔  Confirmer"
@@ -199,8 +225,8 @@
                             maxWidth="1e9"
                             styleClass="btn-danger"/>
 
-                    <HBox fx:id="hboxMsgStatut" spacing="5" alignment="CENTER_LEFT"
-                          visible="false" managed="false">
+                    <HBox fx:id="hboxMsgStatut" spacing="6" alignment="CENTER_LEFT"
+                          visible="false" managed="false" styleClass="inline-msg">
                         <Label fx:id="iconMsgStatut" text=""/>
                         <Label fx:id="lblMsgStatut" text="" wrapText="true"/>
                     </HBox>
@@ -210,31 +236,24 @@
                 </VBox>
             </VBox>
 
-            <!-- RIGHT CARD : Table -->
+            <!-- RIGHT CARD -->
             <VBox spacing="10" styleClass="card" HBox.hgrow="ALWAYS">
                 <Text text="Liste des commandes" styleClass="h2"/>
 
                 <TableView fx:id="tableCommandes" VBox.vgrow="ALWAYS">
                     <columns>
-                        <TableColumn fx:id="colIdCommande" text="ID" prefWidth="60"/>
-                        <TableColumn fx:id="colIdClient" text="Client" prefWidth="80"/>
-                        <TableColumn fx:id="colProduitNom" text="Produit" prefWidth="200"/>
-                        <TableColumn fx:id="colQte" text="Qté" prefWidth="60"/>
-                        <TableColumn fx:id="colStatut" text="Statut" prefWidth="130"/>
+                        <TableColumn fx:id="colIdCommande"    text="ID"       prefWidth="60"/>
+                        <TableColumn fx:id="colIdClient"      text="Client"   prefWidth="80"/>
+                        <TableColumn fx:id="colProduitNom"    text="Produit"  prefWidth="260"/>
+                        <TableColumn fx:id="colQte"           text="Qté"      prefWidth="60"/>
+                        <TableColumn fx:id="colStatut"        text="Statut"   prefWidth="130"/>
                         <TableColumn fx:id="colPaymentStatus" text="Paiement" prefWidth="110"/>
-                        <TableColumn fx:id="colPayee" text="Payée" prefWidth="80"/>
+                        <TableColumn fx:id="colPayee"         text="Payée"    prefWidth="80"/>
                     </columns>
                     <placeholder>
                         <Label text="Aucune commande trouvée." styleClass="muted"/>
                     </placeholder>
                 </TableView>
-
-                <!-- (Optionnel) petit bouton payer global si tu veux, masqué par défaut -->
-                <HBox spacing="10" alignment="CENTER_RIGHT" visible="false" managed="false">
-                    <Button text="💳 Payer la commande sélectionnée"
-                            onAction="#onPayerCommande"
-                            styleClass="btn-primary"/>
-                </HBox>
             </VBox>
 
         </HBox>
