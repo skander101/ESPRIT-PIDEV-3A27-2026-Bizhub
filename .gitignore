@@ -1,12 +1,17 @@
 # ── Secrets — NE JAMAIS committer ──────────────────────────────
 .env
+*.env
+Bizhub-User-Java/src/main/resources/stripe.properties
+Bizhub-User-Java/src/main/resources/twilio.properties
 *.properties
 
 # ── À committer (templates publics) ────────────────────────────
 !.env.example
+!*.properties.example
 
 # ── Java / Maven ────────────────────────────────────────────────
 target/
+Bizhub-User-Java/target/
 *.class
 *.jar
 
@@ -14,4 +19,4 @@ target/
 .idea/
 *.iml
 *.iws
-*.iprBizhub-User-Java/target/
+*.ipr
