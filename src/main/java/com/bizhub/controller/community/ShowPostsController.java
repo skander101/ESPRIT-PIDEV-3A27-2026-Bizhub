@@ -7,13 +7,18 @@ import com.bizhub.model.services.community.post.PostService;
 import com.bizhub.model.services.common.service.AppSession;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
-import javafx.scene.Parent;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaView;
 import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
+import java.io.File;
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -37,6 +42,8 @@ public class ShowPostsController {
     @FXML private ComboBox<String> categoryCombo;
     @FXML private TextArea contentArea;
     @FXML private Label formError;
+    @FXML private Label mediaLabel;
+    @FXML private Button clearMediaBtn;
 
     // Comments overlay
     @FXML private StackPane commentsOverlay;
@@ -53,11 +60,21 @@ public class ShowPostsController {
     private final PostService postService = new PostService();
     private final CommentService commentService = new CommentService();
 
-    private Post editingPost = null;     // null = adding new post
-    private Post currentPost = null;     // post whose comments are open
+    private Post editingPost = null;
+    private Post currentPost = null;
     private Comment editingComment = null;
+    private String selectedMediaUrl = null;
+    private String selectedMediaType = null;
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
+
+    /** Returns the absolute path to the media directory, creating it if needed */
+    private java.io.File getMediaDir() {
+        // Save next to the running jar / target/classes, always absolute
+        java.io.File dir = new java.io.File("src/main/resources/com/bizhub/images/community");
+        if (!dir.exists()) dir.mkdirs();
+        return dir;
+    }
 
     /** Returns true if current user owns this resource OR is admin */
     private boolean canEdit(int resourceUserId) {
@@ -95,7 +112,13 @@ public class ShowPostsController {
         contentArea.clear();
         categoryCombo.setValue("General");
         formError.setText("");
+        onClearMedia();
         showForm(true);
+    }
+
+    @FXML
+    public void onCancelForm() {
+        showForm(false);
     }
 
     private void showEditForm(Post post) {
@@ -105,6 +128,17 @@ public class ShowPostsController {
         contentArea.setText(post.getContent());
         categoryCombo.setValue(post.getCategory());
         formError.setText("");
+        // Load existing media info
+        selectedMediaUrl = post.getMediaUrl();
+        selectedMediaType = post.getMediaType();
+        if (selectedMediaUrl != null) {
+            mediaLabel.setText("📎 Current media attached");
+            mediaLabel.setStyle("-fx-text-fill:#4CAF50;-fx-font-size:12px;");
+            clearMediaBtn.setVisible(true);
+            clearMediaBtn.setManaged(true);
+        } else {
+            onClearMedia();
+        }
         showForm(true);
     }
 
@@ -114,8 +148,58 @@ public class ShowPostsController {
     }
 
     @FXML
-    public void onCancelForm() {
-        showForm(false);
+    public void onPickMedia() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Select Image or Video");
+        chooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp"),
+                new FileChooser.ExtensionFilter("Videos", "*.mp4", "*.avi", "*.mkv", "*.mov")
+        );
+        Stage stage = (Stage) titleField.getScene().getWindow();
+        File file = chooser.showOpenDialog(stage);
+        if (file == null) return;
+
+        try {
+            File dir = getMediaDir();
+            String ext = file.getName().substring(file.getName().lastIndexOf('.'));
+            String uniqueName = java.util.UUID.randomUUID().toString() + ext;
+            File target = new File(dir, uniqueName);
+
+            // Copy file
+            java.nio.file.Files.copy(file.toPath(), target.toPath(),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+            // Store the ABSOLUTE path so we can load it at runtime
+            selectedMediaUrl = target.getAbsolutePath();
+
+            // Determine type
+            String nameLower = file.getName().toLowerCase();
+            if (nameLower.endsWith(".mp4") || nameLower.endsWith(".avi") ||
+                    nameLower.endsWith(".mkv") || nameLower.endsWith(".mov")) {
+                selectedMediaType = "video";
+            } else {
+                selectedMediaType = "image";
+            }
+
+            mediaLabel.setText("📎 " + file.getName());
+            mediaLabel.setStyle("-fx-text-fill:#4CAF50;-fx-font-size:12px;");
+            clearMediaBtn.setVisible(true);
+            clearMediaBtn.setManaged(true);
+
+        } catch (Exception e) {
+            mediaLabel.setText("Error: " + e.getMessage());
+            mediaLabel.setStyle("-fx-text-fill:#EF4444;");
+        }
+    }
+
+    @FXML
+    public void onClearMedia() {
+        selectedMediaUrl = null;
+        selectedMediaType = null;
+        mediaLabel.setText("No file selected");
+        mediaLabel.setStyle("-fx-text-fill:#607A93;-fx-font-size:12px;");
+        clearMediaBtn.setVisible(false);
+        clearMediaBtn.setManaged(false);
     }
 
     @FXML
@@ -135,11 +219,15 @@ public class ShowPostsController {
             if (editingPost == null) {
                 int userId = AppSession.getCurrentUser() != null ? AppSession.getCurrentUser().getUserId() : 1;
                 Post p = new Post(userId, title, content, category);
+                p.setMediaUrl(selectedMediaUrl);
+                p.setMediaType(selectedMediaType);
                 postService.create(p);
             } else {
                 editingPost.setTitle(title);
                 editingPost.setContent(content);
                 editingPost.setCategory(category);
+                editingPost.setMediaUrl(selectedMediaUrl);
+                editingPost.setMediaType(selectedMediaType);
                 postService.update(editingPost);
             }
             showForm(false);
@@ -378,7 +466,50 @@ public class ShowPostsController {
             header.setAlignment(javafx.geometry.Pos.TOP_LEFT);
             HBox.setHgrow(header.getChildren().get(1), Priority.ALWAYS);
 
-            VBox card = new VBox(10, header, content, actions);
+            VBox card = new VBox(10, header, content);
+
+            // Show image or video if present
+            if (post.getMediaUrl() != null && !post.getMediaUrl().isBlank()) {
+                if ("image".equals(post.getMediaType())) {
+                    try {
+                        File imgFile = new File(post.getMediaUrl());
+                        if (imgFile.exists()) {
+                            ImageView imageView = new ImageView(
+                                    new Image(imgFile.toURI().toString()));
+                            imageView.setFitWidth(400);
+                            imageView.setPreserveRatio(true);
+                            imageView.setStyle("-fx-background-radius:8;");
+                            card.getChildren().add(imageView);
+                        }
+                    } catch (Exception ignored) {}
+                } else if ("video".equals(post.getMediaType())) {
+                    try {
+                        File vidFile = new File(post.getMediaUrl());
+                        if (vidFile.exists()) {
+                            Media media = new Media(vidFile.toURI().toString());
+                            MediaPlayer player = new MediaPlayer(media);
+                            MediaView mediaView = new MediaView(player);
+                            mediaView.setFitWidth(400);
+                            mediaView.setPreserveRatio(true);
+
+                            Button playBtn = new Button("▶ Play Video");
+                            playBtn.setStyle("-fx-background-color:#FFB84D;-fx-text-fill:#0F2035;-fx-font-weight:bold;-fx-background-radius:6;-fx-cursor:hand;-fx-padding:5 14;");
+                            playBtn.setOnAction(ev -> {
+                                if (player.getStatus() == MediaPlayer.Status.PLAYING) {
+                                    player.pause();
+                                    playBtn.setText("▶ Play Video");
+                                } else {
+                                    player.play();
+                                    playBtn.setText("⏸ Pause");
+                                }
+                            });
+                            card.getChildren().addAll(mediaView, playBtn);
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+
+            card.getChildren().add(actions);
             card.setStyle(
                     "-fx-background-color:#112236;" +
                             "-fx-background-radius:14;" +

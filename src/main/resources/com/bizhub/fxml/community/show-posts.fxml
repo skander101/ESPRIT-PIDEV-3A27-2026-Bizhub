@@ -21,7 +21,7 @@
         <HBox fx:id="topbar" spacing="12" alignment="CENTER_LEFT" styleClass="topbar">
             <padding><Insets top="14" right="16" bottom="14" left="16"/></padding>
             <ImageView fitHeight="40" fitWidth="40" pickOnBounds="true" preserveRatio="true">
-                <image><Image url="@../images/site-images/logo.png"/></image>
+                <image><Image url="@../../images/site-images/logo.png"/></image>
             </ImageView>
             <VBox spacing="2">
                 <Text text="Community" styleClass="h1"/>
@@ -77,6 +77,15 @@
                               styleClass="profile-field"/>
 
                     <Label fx:id="formError" styleClass="error-text" text="" wrapText="true"/>
+
+                    <Label styleClass="hint" text="Photo / Video (optional)"/>
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Button text="📎 Attach File" onAction="#onPickMedia" styleClass="btn"/>
+                        <Button fx:id="clearMediaBtn" text="✕ Remove" onAction="#onClearMedia"
+                                styleClass="btn" visible="false" managed="false"/>
+                    </HBox>
+                    <Label fx:id="mediaLabel" text="No file selected"
+                           style="-fx-text-fill:#607A93;-fx-font-size:12px;" wrapText="true"/>
 
                     <HBox spacing="10">
                         <Button fx:id="saveBtn"   text="Post"   onAction="#onSavePost"

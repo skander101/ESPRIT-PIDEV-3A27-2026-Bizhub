@@ -10,6 +10,8 @@ public class Post {
     private String category;
     private LocalDateTime createdAt;
     private String authorName; // joined from user table, not a DB column
+    private String mediaUrl;   // path to image or video file
+    private String mediaType;  // "image" or "video"
 
     public Post() {}
 
@@ -40,6 +42,12 @@ public class Post {
 
     public String getAuthorName() { return authorName; }
     public void setAuthorName(String authorName) { this.authorName = authorName; }
+
+    public String getMediaUrl() { return mediaUrl; }
+    public void setMediaUrl(String mediaUrl) { this.mediaUrl = mediaUrl; }
+
+    public String getMediaType() { return mediaType; }
+    public void setMediaType(String mediaType) { this.mediaType = mediaType; }
 
     @Override
     public String toString() {

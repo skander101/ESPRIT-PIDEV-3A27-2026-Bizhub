@@ -17,12 +17,14 @@ public class PostService {
     }
 
     public void create(Post post) throws SQLException {
-        String sql = "INSERT INTO post (user_id, title, content, category) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO post (user_id, title, content, category, media_url, media_type) VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pst = cnx.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pst.setInt(1, post.getUserId());
             pst.setString(2, post.getTitle());
             pst.setString(3, post.getContent());
             pst.setString(4, post.getCategory());
+            pst.setString(5, post.getMediaUrl());
+            pst.setString(6, post.getMediaType());
             pst.executeUpdate();
             try (ResultSet rs = pst.getGeneratedKeys()) {
                 if (rs.next()) post.setPostId(rs.getInt(1));
@@ -53,12 +55,14 @@ public class PostService {
     }
 
     public void update(Post post) throws SQLException {
-        String sql = "UPDATE post SET title=?, content=?, category=? WHERE post_id=?";
+        String sql = "UPDATE post SET title=?, content=?, category=?, media_url=?, media_type=? WHERE post_id=?";
         try (PreparedStatement pst = cnx.prepareStatement(sql)) {
             pst.setString(1, post.getTitle());
             pst.setString(2, post.getContent());
             pst.setString(3, post.getCategory());
-            pst.setInt(4, post.getPostId());
+            pst.setString(4, post.getMediaUrl());
+            pst.setString(5, post.getMediaType());
+            pst.setInt(6, post.getPostId());
             pst.executeUpdate();
         }
     }
@@ -81,6 +85,8 @@ public class PostService {
         Timestamp ts = rs.getTimestamp("created_at");
         p.setCreatedAt(ts == null ? null : ts.toLocalDateTime());
         try { p.setAuthorName(rs.getString("author_name")); } catch (SQLException ignored) {}
+        try { p.setMediaUrl(rs.getString("media_url")); } catch (SQLException ignored) {}
+        try { p.setMediaType(rs.getString("media_type")); } catch (SQLException ignored) {}
         return p;
     }
 }
