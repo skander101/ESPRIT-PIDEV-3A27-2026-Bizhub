@@ -1,22 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.chart.*?>
-
 <BorderPane
         stylesheets="@../css/theme.css,@../css/user-management.css"
         xmlns="http://javafx.com/javafx/21"
         xmlns:fx="http://javafx.com/fxml/1"
         fx:controller="com.bizhub.controller.marketplace.ProduitServiceController">
-
     <!-- LEFT : Sidebar -->
     <left>
-        <fx:include source="admin-sidebar.fxml"/>
+        <fx:include source="user-sidebar.fxml"/>
     </left>
-
     <!-- TOP : Topbar -->
     <top>
         <HBox alignment="CENTER_LEFT" spacing="12" styleClass="topbar">
@@ -31,21 +27,18 @@
             <ComboBox fx:id="cbFilterCategorie" prefWidth="160"/>
         </HBox>
     </top>
-
     <!-- CENTER (avec scrolling) -->
     <center>
         <ScrollPane fitToWidth="true" pannable="true"
                     hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
                     style="-fx-background-color:transparent;"
                     styleClass="transparent-scroll">
-
             <!-- Important: content du scroll -->
             <content>
                 <VBox spacing="14">
                     <padding>
                         <Insets top="14" right="16" bottom="16" left="16"/>
                     </padding>
-
                     <!-- KPI -->
                     <HBox spacing="12">
                         <VBox spacing="6" styleClass="stat-card" HBox.hgrow="ALWAYS">
@@ -61,103 +54,79 @@
                             <Text fx:id="kpiCategories" styleClass="stat-value" text="0"/>
                         </VBox>
                     </HBox>
-
                     <!-- Form + Tables -->
                     <HBox spacing="12">
-
                         <!-- COLONNE GAUCHE : Form CRUD -->
                         <VBox spacing="10" styleClass="card" prefWidth="360">
                             <Text styleClass="h2" text="Gestion Produit/Service"/>
-
                             <GridPane hgap="10" vgap="6">
                                 <columnConstraints>
                                     <ColumnConstraints prefWidth="110"/>
                                     <ColumnConstraints hgrow="ALWAYS"/>
                                 </columnConstraints>
-
-                                <!-- Id Profile -->
-                                <Label text="Id Profile" styleClass="form-label"
-                                       GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-                                <TextField fx:id="tfIdProfile" promptText="ex: 1"
-                                           GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-                                <HBox fx:id="hboxValIdProfile" spacing="5" alignment="CENTER_LEFT"
-                                      visible="false" managed="false"
-                                      GridPane.rowIndex="1" GridPane.columnIndex="1">
-                                    <Label fx:id="iconValIdProfile" text=""/>
-                                    <Label fx:id="lblValIdProfile"  text="" wrapText="true"/>
-                                </HBox>
-
                                 <!-- Nom -->
                                 <Label text="Nom" styleClass="form-label"
-                                       GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-                                <TextField fx:id="tfNom" promptText="Nom..."
-                                           GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                                       GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                                <TextField fx:id="tfNom" promptText="nom — ex: Développement Web, Design UI"
+                                           GridPane.rowIndex="0" GridPane.columnIndex="1"/>
                                 <HBox fx:id="hboxValNom" spacing="5" alignment="CENTER_LEFT"
                                       visible="false" managed="false"
-                                      GridPane.rowIndex="3" GridPane.columnIndex="1">
+                                      GridPane.rowIndex="1" GridPane.columnIndex="1">
                                     <Label fx:id="iconValNom" text=""/>
                                     <Label fx:id="lblValNom"  text="" wrapText="true"/>
                                 </HBox>
-
                                 <!-- Prix -->
                                 <Label text="Prix (TND)" styleClass="form-label"
-                                       GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-                                <TextField fx:id="tfPrix" promptText="ex: 49.90"
-                                           GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+                                       GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                                <TextField fx:id="tfPrix" promptText="prix — ex: 49.900 (TND, décimal)"
+                                           GridPane.rowIndex="2" GridPane.columnIndex="1"/>
                                 <HBox fx:id="hboxValPrix" spacing="5" alignment="CENTER_LEFT"
                                       visible="false" managed="false"
-                                      GridPane.rowIndex="5" GridPane.columnIndex="1">
+                                      GridPane.rowIndex="3" GridPane.columnIndex="1">
                                     <Label fx:id="iconValPrix" text=""/>
                                     <Label fx:id="lblValPrix"  text="" wrapText="true"/>
                                 </HBox>
-
                                 <!-- Quantité -->
                                 <Label text="Quantité" styleClass="form-label"
-                                       GridPane.rowIndex="6" GridPane.columnIndex="0"/>
-                                <TextField fx:id="tfQuantite" promptText="ex: 10"
-                                           GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+                                       GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                                <TextField fx:id="tfQuantite" promptText="quantite — ex: 10 (entier ≥ 0)"
+                                           GridPane.rowIndex="4" GridPane.columnIndex="1"/>
                                 <HBox fx:id="hboxValQuantite" spacing="5" alignment="CENTER_LEFT"
                                       visible="false" managed="false"
-                                      GridPane.rowIndex="7" GridPane.columnIndex="1">
+                                      GridPane.rowIndex="5" GridPane.columnIndex="1">
                                     <Label fx:id="iconValQuantite" text=""/>
                                     <Label fx:id="lblValQuantite"  text="" wrapText="true"/>
                                 </HBox>
-
                                 <!-- Catégorie -->
                                 <Label text="Catégorie" styleClass="form-label"
-                                       GridPane.rowIndex="8" GridPane.columnIndex="0"/>
-                                <TextField fx:id="tfCategorie" promptText="ex: Design"
-                                           GridPane.rowIndex="8" GridPane.columnIndex="1"/>
+                                       GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+                                <TextField fx:id="tfCategorie" promptText="categorie — ex: design, math, consulting"
+                                           GridPane.rowIndex="6" GridPane.columnIndex="1"/>
                                 <HBox fx:id="hboxValCategorie" spacing="5" alignment="CENTER_LEFT"
                                       visible="false" managed="false"
-                                      GridPane.rowIndex="9" GridPane.columnIndex="1">
+                                      GridPane.rowIndex="7" GridPane.columnIndex="1">
                                     <Label fx:id="iconValCategorie" text=""/>
                                     <Label fx:id="lblValCategorie"  text="" wrapText="true"/>
                                 </HBox>
-
                                 <!-- Disponible -->
                                 <Label text="Disponible" styleClass="form-label"
-                                       GridPane.rowIndex="10" GridPane.columnIndex="0"/>
+                                       GridPane.rowIndex="8" GridPane.columnIndex="0"/>
                                 <CheckBox fx:id="cbDisponible" text="Oui" selected="true"
-                                          GridPane.rowIndex="10" GridPane.columnIndex="1"/>
-
+                                          GridPane.rowIndex="8" GridPane.columnIndex="1"/>
                                 <!-- Description -->
                                 <Label text="Description" styleClass="form-label"
-                                       GridPane.rowIndex="11" GridPane.columnIndex="0"/>
-                                <TextArea fx:id="taDescription" promptText="Description..."
+                                       GridPane.rowIndex="9" GridPane.columnIndex="0"/>
+                                <TextArea fx:id="taDescription" promptText="description — décrivez votre produit/service (optionnel)"
                                           prefRowCount="3"
-                                          GridPane.rowIndex="11" GridPane.columnIndex="1"/>
+                                          GridPane.rowIndex="9" GridPane.columnIndex="1"/>
                             </GridPane>
-
                             <!-- Message global CRUD -->
                             <HBox fx:id="hboxMsgCrud" spacing="6" alignment="CENTER_LEFT"
                                   visible="false" managed="false">
                                 <Label fx:id="iconMsgCrud" text=""/>
                                 <Label fx:id="lblMsgCrud"  text="" wrapText="true"/>
                             </HBox>
-
                             <Separator/>
-
                             <HBox spacing="10">
                                 <Button fx:id="btnAjouter"   text="Ajouter"   onAction="#onAjouter"
                                         maxWidth="1e9" styleClass="btn-primary"   HBox.hgrow="ALWAYS"/>
@@ -171,10 +140,8 @@
                                         maxWidth="1e9" styleClass="btn-secondary" HBox.hgrow="ALWAYS"/>
                             </HBox>
                         </VBox>
-
                         <!-- COLONNE DROITE : Tables -->
                         <VBox spacing="12" HBox.hgrow="ALWAYS">
-
                             <!-- Table Produits -->
                             <VBox spacing="8" styleClass="card">
                                 <Text styleClass="h2" text="Liste Produits/Services"/>
@@ -192,24 +159,20 @@
                                     </placeholder>
                                 </TableView>
                             </VBox>
-
                             <!-- SECTION COMMANDES INVESTISSEUR -->
                             <VBox fx:id="boxCommandesInvestor" spacing="10" styleClass="card"
                                   visible="false" managed="false">
-
                                 <HBox alignment="CENTER_LEFT" spacing="12">
                                     <Text styleClass="h2" text="Commandes reçues"/>
                                     <Pane HBox.hgrow="ALWAYS"/>
                                     <Button text="↺ Rafraîchir" onAction="#refreshCommandes"
                                             styleClass="btn-secondary"/>
                                 </HBox>
-
                                 <HBox fx:id="hboxCmdInfo" spacing="8" alignment="CENTER_LEFT"
                                       visible="false" managed="false">
                                     <Label text="▶" style="-fx-text-fill:#E8A93A;-fx-font-weight:bold;"/>
                                     <Label fx:id="lblCmdInfo" text="" styleClass="hint" wrapText="true"/>
                                 </HBox>
-
                                 <TableView fx:id="tableCommandes" prefHeight="260">
                                     <columns>
                                         <TableColumn fx:id="colCmdId"     text="ID"      prefWidth="55"/>
@@ -227,33 +190,27 @@
                                         <Label text="Aucune commande reçue." styleClass="muted"/>
                                     </placeholder>
                                 </TableView>
-
                                 <HBox spacing="10" alignment="CENTER_LEFT">
                                     <Button fx:id="btnConfirmerCmd" text="✔  Confirmer"
                                             onAction="#onConfirmerCommande" styleClass="btn-primary"/>
                                     <Button fx:id="btnAnnulerCmd" text="✖  Annuler"
                                             onAction="#onAnnulerCommande" styleClass="btn-danger"/>
                                 </HBox>
-
                                 <HBox fx:id="hboxMsgCmd" spacing="6" alignment="CENTER_LEFT"
                                       visible="false" managed="false">
                                     <Label fx:id="iconMsgCmd" text=""/>
                                     <Label fx:id="lblMsgCmd"  text="" wrapText="true"/>
                                 </HBox>
-
                                 <Label text="💡 Seules les commandes « en attente » peuvent être confirmées ou annulées."
                                        styleClass="muted" wrapText="true"/>
                             </VBox>
-
                         </VBox>
                     </HBox>
-
                     <!-- Performance Investisseur (Ventes / Achats) -->
                     <VBox spacing="0" styleClass="card" prefHeight="420"
                           style="-fx-background-color:#1a2235; -fx-background-radius:16;
                                  -fx-border-color:rgba(232,169,58,0.2); -fx-border-width:1;
                                  -fx-border-radius:16; -fx-padding:0;">
-
                         <!-- Header -->
                         <HBox spacing="12" alignment="CENTER_LEFT"
                               style="-fx-padding:18 20 14 20;
@@ -264,7 +221,6 @@
                                    style="-fx-text-fill:#E8A93A; -fx-font-size:14px;
                                           -fx-font-weight:700;"/>
                             <Pane HBox.hgrow="ALWAYS"/>
-
                             <!-- KPIs inline -->
                             <VBox fx:id="kpiVentesBox" alignment="CENTER"
                                   style="-fx-background-color:rgba(16,185,129,0.12);
@@ -277,7 +233,6 @@
                                 <Label text="✅ Confirmées"
                                        style="-fx-text-fill:#6B7280; -fx-font-size:9px;"/>
                             </VBox>
-
                             <VBox fx:id="kpiAchatsBox" alignment="CENTER"
                                   style="-fx-background-color:rgba(239,68,68,0.12);
                                          -fx-border-color:rgba(239,68,68,0.3);
@@ -289,7 +244,6 @@
                                 <Label text="❌ Annulées"
                                        style="-fx-text-fill:#6B7280; -fx-font-size:9px;"/>
                             </VBox>
-
                             <ComboBox fx:id="periodeCombo" prefWidth="110"
                                       style="-fx-background-color:#0f1824;
                                              -fx-border-color:rgba(232,169,58,0.35);
@@ -302,7 +256,6 @@
                                            -fx-text-fill:#E8A93A; -fx-font-size:14px;
                                            -fx-cursor:hand; -fx-padding:4 12;"/>
                         </HBox>
-
                         <!-- Chart -->
                         <LineChart fx:id="statsChart" prefHeight="340" animated="true"
                                    legendVisible="true" createSymbols="true"
@@ -324,10 +277,81 @@
                             </yAxis>
                         </LineChart>
                     </VBox>
-
+                    <!-- IA Insights Investisseur -->
+                    <VBox fx:id="boxAiInsights" spacing="0" styleClass="card"
+                          style="-fx-background-color:#1a2235; -fx-background-radius:16;
+             -fx-border-color:rgba(232,169,58,0.2); -fx-border-width:1;
+             -fx-border-radius:16; -fx-padding:0;"
+                          visible="false" managed="false">
+                        <!-- Header -->
+                        <HBox spacing="12" alignment="CENTER_LEFT"
+                              style="-fx-padding:16 20 12 20;
+                 -fx-border-color:rgba(255,255,255,0.06);
+                 -fx-border-width:0 0 1 0;">
+                            <Label text="🤖" style="-fx-font-size:18px;"/>
+                            <Label text="Analyse IA — Insights Investisseur"
+                                   style="-fx-text-fill:#E8A93A; -fx-font-size:14px; -fx-font-weight:700;"/>
+                            <Pane HBox.hgrow="ALWAYS"/>
+                            <Button fx:id="btnAnalyzeAi" text="✨ Analyser avec IA"
+                                    onAction="#onAnalyzeAi"
+                                    style="-fx-background-color:rgba(232,169,58,0.2);
+                       -fx-border-color:rgba(232,169,58,0.5);
+                       -fx-border-radius:8; -fx-background-radius:8;
+                       -fx-text-fill:#E8A93A; -fx-font-weight:700;
+                       -fx-cursor:hand; -fx-padding:6 16;"/>
+                        </HBox>
+                        <!-- Loading -->
+                        <HBox fx:id="hboxAiLoading" alignment="CENTER" spacing="10"
+                              visible="false" managed="false"
+                              style="-fx-padding:20;">
+                            <ProgressIndicator prefWidth="24" prefHeight="24"
+                                               style="-fx-progress-color:#E8A93A;"/>
+                            <Label text="Analyse en cours..."
+                                   style="-fx-text-fill:#9CA3AF; -fx-font-size:12px;"/>
+                        </HBox>
+                        <!-- Contenu IA -->
+                        <VBox fx:id="hboxAiContent" spacing="14"
+                              visible="false" managed="false"
+                              style="-fx-padding:16 20;">
+                            <!-- Résumé -->
+                            <VBox spacing="6"
+                                  style="-fx-background-color:rgba(255,255,255,0.04);
+                     -fx-background-radius:10; -fx-padding:12 14;">
+                                <Label text="📊 Résumé"
+                                       style="-fx-text-fill:#E8A93A; -fx-font-weight:700; -fx-font-size:12px;"/>
+                                <Label fx:id="lblAiSummary" text="" wrapText="true"
+                                       style="-fx-text-fill:#D1D5DB; -fx-font-size:12px; -fx-line-spacing:3;"/>
+                            </VBox>
+                            <HBox spacing="12">
+                                <!-- Anomalies -->
+                                <VBox spacing="6" HBox.hgrow="ALWAYS"
+                                      style="-fx-background-color:rgba(239,68,68,0.08);
+                         -fx-border-color:rgba(239,68,68,0.25);
+                         -fx-border-radius:10; -fx-background-radius:10; -fx-padding:12 14;">
+                                    <Label text="⚠️ Anomalies"
+                                           style="-fx-text-fill:#EF4444; -fx-font-weight:700; -fx-font-size:12px;"/>
+                                    <Label fx:id="lblAiAnomalies" text="" wrapText="true"
+                                           style="-fx-text-fill:#FCA5A5; -fx-font-size:11px; -fx-line-spacing:4;"/>
+                                </VBox>
+                                <!-- Recommandations -->
+                                <VBox spacing="6" HBox.hgrow="ALWAYS"
+                                      style="-fx-background-color:rgba(16,185,129,0.08);
+                         -fx-border-color:rgba(16,185,129,0.25);
+                         -fx-border-radius:10; -fx-background-radius:10; -fx-padding:12 14;">
+                                    <Label text="💡 Recommandations"
+                                           style="-fx-text-fill:#10B981; -fx-font-weight:700; -fx-font-size:12px;"/>
+                                    <Label fx:id="lblAiRecommendations" text="" wrapText="true"
+                                           style="-fx-text-fill:#6EE7B7; -fx-font-size:11px; -fx-line-spacing:4;"/>
+                                </VBox>
+                            </HBox>
+                        </VBox>
+                        <!-- Erreur -->
+                        <Label fx:id="lblAiError" text="" wrapText="true"
+                               visible="false" managed="false"
+                               style="-fx-text-fill:#EF4444; -fx-font-size:11px; -fx-padding:10 20;"/>
+                    </VBox>
                 </VBox>
             </content>
         </ScrollPane>
     </center>
-
 </BorderPane>

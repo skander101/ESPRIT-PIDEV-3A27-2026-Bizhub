@@ -62,6 +62,28 @@ public class UserSidebarController {
     }
 
     @FXML
+    public void goToMarketplaceHome() {
+        User me = AppSession.getCurrentUser();
+        Stage stage = (Stage) goProfileBtn.getScene().getWindow();
+        NavigationService nav = new NavigationService(stage);
+
+        if (me == null) {
+            nav.goToLogin();
+            return;
+        }
+
+        String role = me.getUserType() == null ? "" : me.getUserType().trim().toLowerCase();
+
+        if (role.contains("startup")) {
+            nav.goToCommande();
+        } else if (role.contains("investisseur") || role.contains("fournisseur")) {
+            nav.goToProduitService();
+        } else {
+            nav.goToCommande();
+        }
+    }
+
+    @FXML
     public void goAiChat() {
         Stage stage = (Stage) goProfileBtn.getScene().getWindow();
         new NavigationService(stage).goToAiChat();

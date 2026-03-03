@@ -109,6 +109,16 @@ public class ProduitServiceController {
     @FXML private Label kpiVentesVal;   // ✅ KPI total ventes
     @FXML private Label kpiAchatsVal;   // ✅ KPI total achats
 
+    // ── AI Insights Section ───────────────────────────────────
+    @FXML private VBox  boxAiInsights;
+    @FXML private VBox  hboxAiContent;
+    @FXML private HBox  hboxAiLoading;
+    @FXML private Label lblAiSummary;
+    @FXML private Label lblAiAnomalies;
+    @FXML private Label lblAiRecommendations;
+    @FXML private Label lblAiError;
+    @FXML private Button btnAnalyzeAi;
+
     @FXML
     private ComboBox<String> periodeCombo;
 
@@ -331,6 +341,7 @@ public class ProduitServiceController {
         boolean isInvestisseur = role.contains("invest");
 
         setVM(boxCommandesInvestor, isInvestisseur);
+        setVM(boxAiInsights, isInvestisseur);
         boolean canCrud = isInvestisseur || role.contains("fournisseur");
         setProductsCrudEnabled(canCrud);
 
@@ -1384,5 +1395,92 @@ public class ProduitServiceController {
                             "-fx-padding:4 10;"));
 
         } catch (Exception ignore) {}
+    }
+
+    @FXML
+    private void onAnalyzeAi() {
+        if (btnAnalyzeAi != null) btnAnalyzeAi.setDisable(true);
+        if (hboxAiLoading != null) { hboxAiLoading.setVisible(true); hboxAiLoading.setManaged(true); }
+        if (hboxAiContent != null) { hboxAiContent.setVisible(false); hboxAiContent.setManaged(false); }
+        if (lblAiError != null)    { lblAiError.setVisible(false);    lblAiError.setManaged(false); }
+
+        var me = AppSession.getCurrentUser();
+        if (me == null) return;
+        int investorId = me.getUserId();
+
+        int days = 30;
+        if (periodeCombo != null) {
+            String val = periodeCombo.getValue();
+            if ("90 jours".equals(val)) days = 90;
+            else if ("1 an".equals(val)) days = 365;
+        }
+        LocalDate from = LocalDate.now().minusDays(days);
+        LocalDate to   = LocalDate.now();
+
+        final int fDays = days;
+        new Thread(() -> {
+            try {
+                // ✅ Démarrer le serveur Insights si pas encore démarré
+                int port = com.bizhub.controller.marketplace.InvestorInsightsApiServer.getActivePort();
+                if (port <= 0)
+                    port = com.bizhub.controller.marketplace.InvestorInsightsApiServer.start();
+
+                String url = "http://localhost:" + port + "/api/investor/insights"
+                        + "?investorId=" + investorId
+                        + "&from=" + from + "&to=" + to;
+
+                java.net.http.HttpResponse<String> resp =
+                        java.net.http.HttpClient.newHttpClient().send(
+                                java.net.http.HttpRequest.newBuilder()
+                                        .uri(java.net.URI.create(url))
+                                        .timeout(java.time.Duration.ofSeconds(60))
+                                        .GET().build(),
+                                java.net.http.HttpResponse.BodyHandlers.ofString());
+
+                String body = resp.body() == null ? "" : resp.body().trim();
+
+                com.google.gson.JsonObject obj =
+                        new com.google.gson.Gson().fromJson(body, com.google.gson.JsonObject.class);
+
+                if (obj.has("error")) throw new Exception(obj.get("error").getAsString());
+
+                String summary = obj.has("summary") ? obj.get("summary").getAsString() : "—";
+
+                // Listes → texte avec bullets
+                String anomalies = formatList(obj, "anomalies", "•");
+                String recomms   = formatList(obj, "recommendations", "→");
+
+                Platform.runLater(() -> {
+                    if (lblAiSummary != null) lblAiSummary.setText(summary);
+                    if (lblAiAnomalies != null) lblAiAnomalies.setText(anomalies);
+                    if (lblAiRecommendations != null) lblAiRecommendations.setText(recomms);
+
+                    if (hboxAiLoading != null) { hboxAiLoading.setVisible(false); hboxAiLoading.setManaged(false); }
+                    if (hboxAiContent != null) { hboxAiContent.setVisible(true); hboxAiContent.setManaged(true); }
+                    if (btnAnalyzeAi != null) btnAnalyzeAi.setDisable(false);
+                });
+
+            } catch (Exception e) {
+                LOGGER.warning("onAnalyzeAi erreur : " + e.getMessage());
+                Platform.runLater(() -> {
+                    if (hboxAiLoading != null) { hboxAiLoading.setVisible(false); hboxAiLoading.setManaged(false); }
+                    if (lblAiError != null) {
+                        lblAiError.setText("❌ Erreur IA : " + e.getMessage());
+                        lblAiError.setVisible(true); lblAiError.setManaged(true);
+                    }
+                    if (btnAnalyzeAi != null) btnAnalyzeAi.setDisable(false);
+                });
+            }
+        }, "ai-insights").start();
+    }
+
+    private String formatList(com.google.gson.JsonObject obj, String key, String bullet) {
+        if (!obj.has(key) || !obj.get(key).isJsonArray()) return "—";
+        StringBuilder sb = new StringBuilder();
+        obj.getAsJsonArray(key).forEach(el -> {
+            if (!sb.isEmpty()) sb.append("\n");
+            sb.append(bullet).append(" ").append(el.getAsString());
+        });
+        return sb.isEmpty() ? "Aucun élément." : sb.toString();
     }
 }

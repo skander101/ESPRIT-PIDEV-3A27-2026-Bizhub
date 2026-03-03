@@ -5,6 +5,8 @@ com/bizhub/controller/marketplace/CommandeTrackingController$1.class
 com/bizhub/controller/AiChatController$1.class
 com/bizhub/model/marketplace/InvestorStatsRepository.class
 com/bizhub/model/marketplace/Commande.class
+com/bizhub/model/services/ai/OpenAiClient.class
+com/bizhub/model/marketplace/InvestorInsightResponse.class
 com/bizhub/model/services/common/service/FacePlusPlusService$3.class
 com/bizhub/model/users_avis/review/Review.class
 com/bizhub/controller/marketplace/ProduitServiceController$3.class
@@ -46,6 +48,7 @@ com/bizhub/controller/marketplace/PanierController$3.class
 com/bizhub/model/services/marketplace/FactureService$ClientInfo.class
 com/bizhub/model/marketplace/PanierItem.class
 com/bizhub/controller/users_avis/formation/FormationManagementController.class
+com/bizhub/model/services/common/config/EnvLoader.class
 com/bizhub/service/WebcamService$2.class
 com/bizhub/controller/marketplace/ProduitServiceController$6.class
 com/bizhub/model/services/marketplace/InvestorStatsService.class
@@ -53,6 +56,7 @@ com/bizhub/controller/users_avis/review/ReviewManagementController$ReviewCardCel
 com/bizhub/model/services/common/service/CloudflareAiService.class
 com/bizhub/controller/users_avis/user/AdminSidebarController.class
 com/bizhub/model/services/common/service/AiDatabaseAssistantService$ChatMessage.class
+com/bizhub/controller/marketplace/InvestorInsightsApiServer.class
 com/bizhub/controller/users_avis/formation/FormationFormController.class
 com/bizhub/controller/AiChatController$2.class
 com/bizhub/model/services/common/service/FaceDetectionResult.class
@@ -112,6 +116,7 @@ com/bizhub/model/marketplace/StatsPoint.class
 com/bizhub/model/services/user_avis/formation/FormationService.class
 com/bizhub/model/users_avis/formation/Formation.class
 com/bizhub/model/services/common/service/FacePlusPlusService.class
+com/bizhub/model/services/common/config/Env.class
 com/bizhub/controller/marketplace/CommandeTrackingController$3.class
 com/bizhub/controller/users_avis/user/VerificationController.class
 com/bizhub/model/services/marketplace/PanierService.class
@@ -119,3 +124,4 @@ com/bizhub/controller/marketplace/CommandeController$6.class
 com/bizhub/model/services/user_avis/formation/FormationContext.class
 com/bizhub/model/services/common/service/Services.class
 com/bizhub/model/services/common/service/AuthService$Session.class
+com/bizhub/model/services/ai/AiInsightsService.class

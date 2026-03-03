@@ -18,9 +18,13 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.util.logging.Logger;
 
 public class NavigationService {
+
+    private static final Logger LOGGER = Logger.getLogger(NavigationService.class.getName());
 
     public enum ActiveNav {
         DASHBOARD,
@@ -253,11 +257,22 @@ public class NavigationService {
     }
 
     private static Parent loadFxml(URL res) {
-        try {
-            return FXMLLoader.load(res);
-        } catch (IOException e) {
+        try (InputStream is = res.openStream()) {
+            FXMLLoader loader = new FXMLLoader(res);
+            return loader.load(is);
+        } catch (Exception e) {
             throw new RuntimeException("Failed to load " + res + ": " + e.getMessage(), e);
         }
+    }
+
+    public static Parent loadFxmlSafe(String fxmlPath) {
+        URL res = NavigationService.class.getResource(fxmlPath);
+        if (res == null) throw new IllegalStateException("Missing FXML: " + fxmlPath);
+        return loadFxml(res);
+    }
+
+    public static Parent loadFxmlSafe(URL res) {
+        return loadFxml(res);
     }
 
     private static Node findOverlay(Parent root) {
@@ -265,4 +280,7 @@ public class NavigationService {
         return root.lookup("#navOverlay");
     }
 }
+
+
+
 

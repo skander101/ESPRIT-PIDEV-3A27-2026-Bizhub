@@ -1,4 +1,5 @@
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/marketplace/CommandeRepository.java
+/home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/controller/marketplace/InvestorInsightsApiServer.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/marketplace/payment/PaymentApiClient.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/common/service/ValidationService.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/common/service/AuthService.java
@@ -12,6 +13,7 @@
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/marketplace/FactureService.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/controller/users_avis/user/TopbarProfileHelper.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/common/ui/toastUtil.java
+/home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/common/config/EnvLoader.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/common/service/Services.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/marketplace/payment/TestStripe.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/marketplace/Commande.java
@@ -40,11 +42,13 @@
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/common/service/AlertHelper.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/Main.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/common/service/AiDatabaseAssistantService.java
+/home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/marketplace/InvestorInsightResponse.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/marketplace/OpenAIService.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/marketplace/PanierService.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/controller/marketplace/CommandeTrackingController.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/controller/users_avis/user/VerificationController.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/common/service/NavigationService.java
+/home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/ai/AiInsightsService.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/controller/marketplace/StripeWebhookServer.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/marketplace/TwilioSmsService.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/user_avis/formation/FormationService.java
@@ -59,6 +63,8 @@
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/users_avis/formation/Formation.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/marketplace/ProduitServiceRepository.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/marketplace/CommandeService.java
+/home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/common/config/Env.java
+/home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/services/ai/OpenAiClient.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/controller/marketplace/ProduitServiceController.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/controller/AiChatController.java
 /home/maindude/Desktop/Perso/Codes/Bizhub/src/main/java/com/bizhub/model/marketplace/CommandeJoinProduit.java

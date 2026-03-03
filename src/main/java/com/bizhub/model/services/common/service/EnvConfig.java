@@ -26,16 +26,17 @@ public final class EnvConfig {
     }
 
     private static Map<String, String> loadEnvFile() {
-        Path envPath = Paths.get(".env");
-        if (!Files.exists(envPath)) {
-            System.err.println("[EnvConfig] .env file not found at project root (" + envPath.toAbsolutePath() + "). " +
-                    "Falling back to system environment variables.");
+        Path envPath = findEnvFile();
+        if (envPath == null || !Files.exists(envPath)) {
+            System.err.println("[EnvConfig] ⚠ Fichier .env introuvable — " +
+                    "variables d'environnement système utilisées uniquement.");
             return Collections.emptyMap();
         }
 
         Map<String, String> map = new HashMap<>();
         try (BufferedReader br = Files.newBufferedReader(envPath, StandardCharsets.UTF_8)) {
             String line;
+            int count = 0;
             while ((line = br.readLine()) != null) {
                 String trimmed = line.trim();
                 if (trimmed.isEmpty() || trimmed.startsWith("#")) continue;
@@ -57,13 +58,38 @@ public final class EnvConfig {
                 }
 
                 map.put(key, value);
+                count++;
             }
+            System.err.println("[EnvConfig] ✅ .env chargé depuis " + envPath.toAbsolutePath()
+                    + " (" + count + " variables)");
         } catch (IOException e) {
-            System.err.println("[EnvConfig] Failed to read .env file: " + e.getMessage());
+            System.err.println("[EnvConfig] ⚠ Erreur lecture .env : " + e.getMessage());
             return Collections.emptyMap();
         }
 
         return map;
+    }
+
+    /**
+     * Find .env file in multiple locations:
+     * 1. Current directory (project root)
+     * 2. Parent directory
+     * 3. User home directory
+     */
+    private static Path findEnvFile() {
+        // 1) Current directory (IntelliJ project root)
+        Path p = Paths.get(".env");
+        if (Files.exists(p)) return p;
+
+        // 2) Parent directory
+        p = Paths.get("../.env");
+        if (Files.exists(p)) return p;
+
+        // 3) User home directory (fallback)
+        p = Paths.get(System.getProperty("user.home")).resolve(".env");
+        if (Files.exists(p)) return p;
+
+        return null;
     }
 
     private static Map<String, String> getEnv() {
@@ -79,15 +105,20 @@ public final class EnvConfig {
 
     /**
      * Get an environment variable value.
-     * First checks .env file, then falls back to system environment variables.
+     * Priority: System.getenv() > .env file
+     * First checks system environment variables, then falls back to .env file.
      */
     public static String get(String key) {
-        String value = getEnv().get(key);
-        if (value == null || value.isBlank()) {
-            value = System.getenv(key);
+        // 1) System environment variables (highest priority)
+        String value = System.getenv(key);
+        if (value != null && !value.isBlank()) {
+            return value;
         }
+
+        // 2) .env file
+        value = getEnv().get(key);
         if (value == null || value.isBlank()) {
-            System.err.println("[EnvConfig] Missing key: " + key + " (not found in .env nor system env)");
+            System.err.println("[EnvConfig] ⚠ Variable manquante : " + key + " (non trouvée dans .env ni dans les variables système)");
         }
         return value;
     }
