@@ -14,7 +14,7 @@
 
     <!-- LEFT : Sidebar -->
     <left>
-        <fx:include source="admin-sidebar.fxml"/>
+        <fx:include source="user-sidebar.fxml"/>
     </left>
 
     <!-- TOP : Topbar -->
@@ -75,78 +75,66 @@
                                     <ColumnConstraints hgrow="ALWAYS"/>
                                 </columnConstraints>
 
-                                <!-- Id Profile -->
-                                <Label text="Id Profile" styleClass="form-label"
-                                       GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-                                <TextField fx:id="tfIdProfile" promptText="ex: 1"
-                                           GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-                                <HBox fx:id="hboxValIdProfile" spacing="5" alignment="CENTER_LEFT"
-                                      visible="false" managed="false"
-                                      GridPane.rowIndex="1" GridPane.columnIndex="1">
-                                    <Label fx:id="iconValIdProfile" text=""/>
-                                    <Label fx:id="lblValIdProfile"  text="" wrapText="true"/>
-                                </HBox>
-
                                 <!-- Nom -->
                                 <Label text="Nom" styleClass="form-label"
-                                       GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-                                <TextField fx:id="tfNom" promptText="Nom..."
-                                           GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                                       GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                                <TextField fx:id="tfNom" promptText="nom — ex: Développement Web, Design UI"
+                                           GridPane.rowIndex="0" GridPane.columnIndex="1"/>
                                 <HBox fx:id="hboxValNom" spacing="5" alignment="CENTER_LEFT"
                                       visible="false" managed="false"
-                                      GridPane.rowIndex="3" GridPane.columnIndex="1">
+                                      GridPane.rowIndex="1" GridPane.columnIndex="1">
                                     <Label fx:id="iconValNom" text=""/>
                                     <Label fx:id="lblValNom"  text="" wrapText="true"/>
                                 </HBox>
 
                                 <!-- Prix -->
                                 <Label text="Prix (TND)" styleClass="form-label"
-                                       GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-                                <TextField fx:id="tfPrix" promptText="ex: 49.90"
-                                           GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+                                       GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                                <TextField fx:id="tfPrix" promptText="prix — ex: 49.900 (TND, décimal)"
+                                           GridPane.rowIndex="2" GridPane.columnIndex="1"/>
                                 <HBox fx:id="hboxValPrix" spacing="5" alignment="CENTER_LEFT"
                                       visible="false" managed="false"
-                                      GridPane.rowIndex="5" GridPane.columnIndex="1">
+                                      GridPane.rowIndex="3" GridPane.columnIndex="1">
                                     <Label fx:id="iconValPrix" text=""/>
                                     <Label fx:id="lblValPrix"  text="" wrapText="true"/>
                                 </HBox>
 
                                 <!-- Quantité -->
                                 <Label text="Quantité" styleClass="form-label"
-                                       GridPane.rowIndex="6" GridPane.columnIndex="0"/>
-                                <TextField fx:id="tfQuantite" promptText="ex: 10"
-                                           GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+                                       GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                                <TextField fx:id="tfQuantite" promptText="quantite — ex: 10 (entier ≥ 0)"
+                                           GridPane.rowIndex="4" GridPane.columnIndex="1"/>
                                 <HBox fx:id="hboxValQuantite" spacing="5" alignment="CENTER_LEFT"
                                       visible="false" managed="false"
-                                      GridPane.rowIndex="7" GridPane.columnIndex="1">
+                                      GridPane.rowIndex="5" GridPane.columnIndex="1">
                                     <Label fx:id="iconValQuantite" text=""/>
                                     <Label fx:id="lblValQuantite"  text="" wrapText="true"/>
                                 </HBox>
 
                                 <!-- Catégorie -->
                                 <Label text="Catégorie" styleClass="form-label"
-                                       GridPane.rowIndex="8" GridPane.columnIndex="0"/>
-                                <TextField fx:id="tfCategorie" promptText="ex: Design"
-                                           GridPane.rowIndex="8" GridPane.columnIndex="1"/>
+                                       GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+                                <TextField fx:id="tfCategorie" promptText="categorie — ex: design, math, consulting"
+                                           GridPane.rowIndex="6" GridPane.columnIndex="1"/>
                                 <HBox fx:id="hboxValCategorie" spacing="5" alignment="CENTER_LEFT"
                                       visible="false" managed="false"
-                                      GridPane.rowIndex="9" GridPane.columnIndex="1">
+                                      GridPane.rowIndex="7" GridPane.columnIndex="1">
                                     <Label fx:id="iconValCategorie" text=""/>
                                     <Label fx:id="lblValCategorie"  text="" wrapText="true"/>
                                 </HBox>
 
                                 <!-- Disponible -->
                                 <Label text="Disponible" styleClass="form-label"
-                                       GridPane.rowIndex="10" GridPane.columnIndex="0"/>
+                                       GridPane.rowIndex="8" GridPane.columnIndex="0"/>
                                 <CheckBox fx:id="cbDisponible" text="Oui" selected="true"
-                                          GridPane.rowIndex="10" GridPane.columnIndex="1"/>
+                                          GridPane.rowIndex="8" GridPane.columnIndex="1"/>
 
                                 <!-- Description -->
                                 <Label text="Description" styleClass="form-label"
-                                       GridPane.rowIndex="11" GridPane.columnIndex="0"/>
-                                <TextArea fx:id="taDescription" promptText="Description..."
+                                       GridPane.rowIndex="9" GridPane.columnIndex="0"/>
+                                <TextArea fx:id="taDescription" promptText="description — décrivez votre produit/service (optionnel)"
                                           prefRowCount="3"
-                                          GridPane.rowIndex="11" GridPane.columnIndex="1"/>
+                                          GridPane.rowIndex="9" GridPane.columnIndex="1"/>
                             </GridPane>
 
                             <!-- Message global CRUD -->

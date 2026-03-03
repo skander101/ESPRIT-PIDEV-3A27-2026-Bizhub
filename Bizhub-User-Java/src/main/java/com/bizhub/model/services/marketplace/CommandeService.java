@@ -83,8 +83,8 @@ public class CommandeService {
                 return;
             }
 
-            String msg = "BizHub ✅ Votre commande #" + idCommande
-                    + " est confirmée. Vous pouvez procéder au paiement dans l’application.";
+            String msg = "BizHub - Commande #" + idCommande
+                    + " confirmee. Vous pouvez proceder au paiement dans l'application.";
 
             if (sms == null) sms = new TwilioSmsService(); // peut throw si pas configuré
             boolean ok = sms.sendSms(phone.trim(), msg);

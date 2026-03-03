@@ -128,7 +128,7 @@ public class ProduitServiceController {
     @FXML private javafx.scene.text.Text kpiCategories;
 
     // ── FXML Formulaire produit ───────────────────────────────
-    @FXML private TextField  tfIdProfile;
+    // idProfile auto depuis AppSession — pas de champ UI
     @FXML private TextField  tfNom;
     @FXML private TextField  tfPrix;
     @FXML private TextField  tfQuantite;
@@ -142,9 +142,7 @@ public class ProduitServiceController {
     @FXML private Button btnVider;
 
     // ── FXML Messages validation inline (produit) ─────────────
-    @FXML private HBox  hboxValIdProfile;
-    @FXML private Label iconValIdProfile;
-    @FXML private Label lblValIdProfile;
+    // hboxValIdProfile supprimé
 
     @FXML private HBox  hboxValNom;
     @FXML private Label iconValNom;
@@ -930,7 +928,7 @@ public class ProduitServiceController {
         selected = null;
         resetAllCrudValidation();
         if (tableProduits != null) tableProduits.getSelectionModel().clearSelection();
-        if (tfIdProfile   != null) { tfIdProfile.clear();   tfIdProfile.setStyle(BORDER_DEF); }
+        // idProfile auto — pas de champ à vider
         if (tfNom         != null) { tfNom.clear();         tfNom.setStyle(BORDER_DEF); }
         if (tfPrix        != null) { tfPrix.clear();        tfPrix.setStyle(BORDER_DEF); }
         if (tfQuantite    != null) { tfQuantite.clear();    tfQuantite.setStyle(BORDER_DEF); }
@@ -942,45 +940,121 @@ public class ProduitServiceController {
     private ProduitService readForm() {
         boolean valid = true;
 
-        int idProfile = 0;
-        String rawId = nz(tfIdProfile != null ? tfIdProfile.getText() : "");
-        if (rawId.isEmpty() || !rawId.matches("\\d+") || (idProfile = Integer.parseInt(rawId)) <= 0) {
-            showErr(hboxValIdProfile, iconValIdProfile, lblValIdProfile, tfIdProfile, "Entier positif requis.");
-            valid = false;
-        } else showOk(hboxValIdProfile, iconValIdProfile, lblValIdProfile, tfIdProfile, "Valide.");
+        // ── id_profile : auto depuis session ─────────────────────────────────
+        var sessionUser = AppSession.getCurrentUser();
+        int idProfile = (sessionUser != null) ? sessionUser.getUserId() : 0;
 
-        String nom = nz(tfNom != null ? tfNom.getText() : "");
+        // ── NOM — VARCHAR(255) : obligatoire, 2–200 chars, pas que chiffres ──
+        String nom = nz(tfNom != null ? tfNom.getText() : "").trim();
         if (nom.isEmpty()) {
-            showErr(hboxValNom, iconValNom, lblValNom, tfNom, "Le nom est obligatoire.");
+            showErr(hboxValNom, iconValNom, lblValNom, tfNom,
+                    "Le nom est obligatoire.");
             valid = false;
-        } else showOk(hboxValNom, iconValNom, lblValNom, tfNom, "Valide.");
-
-        BigDecimal prix;
-        try {
-            prix = new BigDecimal(nz(tfPrix != null ? tfPrix.getText() : ""));
-            if (prix.compareTo(BigDecimal.ZERO) <= 0) throw new NumberFormatException();
-            showOk(hboxValPrix, iconValPrix, lblValPrix, tfPrix, "Valide.");
-        } catch (Exception e) {
-            showErr(hboxValPrix, iconValPrix, lblValPrix, tfPrix, "Nombre décimal > 0 requis (ex: 49.90).");
+        } else if (nom.length() < 2) {
+            showErr(hboxValNom, iconValNom, lblValNom, tfNom,
+                    "Minimum 2 caractères.");
             valid = false;
-            prix = BigDecimal.ZERO;
-        }
-
-        int qte = 0;
-        String rawQte = nz(tfQuantite != null ? tfQuantite.getText() : "");
-        if (rawQte.isEmpty() || !rawQte.matches("\\d+")) {
-            showErr(hboxValQuantite, iconValQuantite, lblValQuantite, tfQuantite, "Entier >= 0 requis.");
+        } else if (nom.length() > 200) {
+            showErr(hboxValNom, iconValNom, lblValNom, tfNom,
+                    "Maximum 200 caractères (" + nom.length() + "/200).");
+            valid = false;
+        } else if (nom.matches("\\d+")) {
+            showErr(hboxValNom, iconValNom, lblValNom, tfNom,
+                    "Le nom ne peut pas être uniquement des chiffres.");
             valid = false;
         } else {
-            qte = Integer.parseInt(rawQte);
-            showOk(hboxValQuantite, iconValQuantite, lblValQuantite, tfQuantite, "Valide.");
+            showOk(hboxValNom, iconValNom, lblValNom, tfNom,
+                    "✓ " + nom.length() + " caractères.");
         }
 
-        String cat = nz(tfCategorie != null ? tfCategorie.getText() : "");
-        if (cat.isEmpty()) {
-            showErr(hboxValCategorie, iconValCategorie, lblValCategorie, tfCategorie, "Catégorie obligatoire.");
+        // ── PRIX — DECIMAL(10,2) : obligatoire, > 0, max 2 décimales ─────────
+        BigDecimal prix = BigDecimal.ZERO;
+        String rawPrix = nz(tfPrix != null ? tfPrix.getText() : "").trim().replace(",", ".");
+        if (rawPrix.isEmpty()) {
+            showErr(hboxValPrix, iconValPrix, lblValPrix, tfPrix,
+                    "Le prix est obligatoire.");
             valid = false;
-        } else showOk(hboxValCategorie, iconValCategorie, lblValCategorie, tfCategorie, "Valide.");
+        } else if (!rawPrix.matches("\\d+(\\.\\d{1,2})?")) {
+            showErr(hboxValPrix, iconValPrix, lblValPrix, tfPrix,
+                    "Format invalide — max 2 décimales (ex: 49.90).");
+            valid = false;
+        } else {
+            try {
+                prix = new BigDecimal(rawPrix);
+                if (prix.compareTo(BigDecimal.ZERO) <= 0) {
+                    showErr(hboxValPrix, iconValPrix, lblValPrix, tfPrix,
+                            "Le prix doit être > 0.");
+                    valid = false;
+                } else if (prix.compareTo(new BigDecimal("9999999.99")) > 0) {
+                    showErr(hboxValPrix, iconValPrix, lblValPrix, tfPrix,
+                            "Prix trop élevé (max 9 999 999.99 TND).");
+                    valid = false;
+                } else {
+                    showOk(hboxValPrix, iconValPrix, lblValPrix, tfPrix,
+                            "✓ " + prix.toPlainString() + " TND");
+                }
+            } catch (NumberFormatException e) {
+                showErr(hboxValPrix, iconValPrix, lblValPrix, tfPrix,
+                        "Nombre invalide (ex: 49.90).");
+                valid = false;
+            }
+        }
+
+        // ── QUANTITE — INT : entier ≥ 0, ≤ 999 999 ───────────────────────────
+        int qte = 0;
+        String rawQte = nz(tfQuantite != null ? tfQuantite.getText() : "").trim();
+        if (rawQte.isEmpty()) {
+            showErr(hboxValQuantite, iconValQuantite, lblValQuantite, tfQuantite,
+                    "La quantité est obligatoire.");
+            valid = false;
+        } else if (!rawQte.matches("\\d+")) {
+            showErr(hboxValQuantite, iconValQuantite, lblValQuantite, tfQuantite,
+                    "Entier positif requis — pas de lettres ni décimales.");
+            valid = false;
+        } else {
+            try {
+                qte = Integer.parseInt(rawQte);
+                if (qte > 999_999) {
+                    showErr(hboxValQuantite, iconValQuantite, lblValQuantite, tfQuantite,
+                            "Quantité trop grande (max 999 999).");
+                    valid = false;
+                } else {
+                    showOk(hboxValQuantite, iconValQuantite, lblValQuantite, tfQuantite,
+                            "✓ " + qte + " unité(s)");
+                }
+            } catch (NumberFormatException e) {
+                showErr(hboxValQuantite, iconValQuantite, lblValQuantite, tfQuantite,
+                        "Entier invalide.");
+                valid = false;
+            }
+        }
+
+        // ── CATEGORIE — VARCHAR : 2–100 chars, lettres/chiffres/espaces ───────
+        String cat = nz(tfCategorie != null ? tfCategorie.getText() : "").trim();
+        if (cat.isEmpty()) {
+            showErr(hboxValCategorie, iconValCategorie, lblValCategorie, tfCategorie,
+                    "La catégorie est obligatoire.");
+            valid = false;
+        } else if (cat.length() < 2) {
+            showErr(hboxValCategorie, iconValCategorie, lblValCategorie, tfCategorie,
+                    "Minimum 2 caractères.");
+            valid = false;
+        } else if (cat.length() > 100) {
+            showErr(hboxValCategorie, iconValCategorie, lblValCategorie, tfCategorie,
+                    "Maximum 100 caractères (" + cat.length() + "/100).");
+            valid = false;
+        } else if (!cat.matches("[\\p{L}0-9 ,\\-_/]+")) {
+            showErr(hboxValCategorie, iconValCategorie, lblValCategorie, tfCategorie,
+                    "Caractères spéciaux non autorisés.");
+            valid = false;
+        } else {
+            showOk(hboxValCategorie, iconValCategorie, lblValCategorie, tfCategorie,
+                    "✓ " + cat);
+        }
+
+        // ── DESCRIPTION — TEXT : optionnel, max 1000 chars ───────────────────
+        String desc = nz(taDescription != null ? taDescription.getText() : "").trim();
+        if (desc.length() > 1000) desc = desc.substring(0, 1000);
 
         if (!valid) throw new IllegalArgumentException("Corrigez les champs en rouge avant de continuer.");
 
@@ -990,14 +1064,14 @@ public class ProduitServiceController {
         p.setPrix(prix);
         p.setQuantite(qte);
         p.setCategorie(cat);
-        p.setDescription(nz(taDescription != null ? taDescription.getText() : ""));
+        p.setDescription(desc);
         p.setDisponible(cbDisponible != null && cbDisponible.isSelected());
         return p;
     }
 
     private void fillForm(ProduitService p) {
         resetAllCrudValidation();
-        if (tfIdProfile   != null) tfIdProfile.setText(String.valueOf(p.getIdProfile()));
+        // idProfile non affiché — auto depuis session
         if (tfNom         != null) tfNom.setText(nz(p.getNom()));
         if (tfPrix        != null) tfPrix.setText(p.getPrix() == null ? "" : p.getPrix().toPlainString());
         if (tfQuantite    != null) tfQuantite.setText(String.valueOf(p.getQuantite()));
@@ -1070,69 +1144,76 @@ public class ProduitServiceController {
     // VALIDATION TEMPS RÉEL (produit)
     // =====================================================
     private void attachRealTimeValidation() {
-        if (tfIdProfile != null)
-            tfIdProfile.textProperty().addListener((obs, o, n) -> {
-                if (n == null || n.isBlank()) {
-                    resetMsg(hboxValIdProfile, iconValIdProfile, lblValIdProfile);
-                    tfIdProfile.setStyle(BORDER_DEF); return;
-                }
-                if (!n.trim().matches("\\d+") || Integer.parseInt(n.trim()) <= 0)
-                    showErr(hboxValIdProfile, iconValIdProfile, lblValIdProfile, tfIdProfile, "Entier positif requis.");
-                else
-                    showOk(hboxValIdProfile, iconValIdProfile, lblValIdProfile, tfIdProfile, "Valide.");
-            });
-
+        // ── NOM — VARCHAR(255) ────────────────────────────────────────────────
         if (tfNom != null)
             tfNom.textProperty().addListener((obs, o, n) -> {
-                if (n == null || n.isBlank()) {
-                    resetMsg(hboxValNom, iconValNom, lblValNom);
-                    tfNom.setStyle(BORDER_DEF); return;
-                }
-                if (n.trim().isEmpty())
-                    showErr(hboxValNom, iconValNom, lblValNom, tfNom, "Le nom est obligatoire.");
-                else
-                    showOk(hboxValNom, iconValNom, lblValNom, tfNom, "Valide.");
+                String v = n == null ? "" : n.trim();
+                if (v.isEmpty()) { resetMsg(hboxValNom, iconValNom, lblValNom); tfNom.setStyle(BORDER_DEF); }
+                else if (v.length() < 2)    showErr(hboxValNom, iconValNom, lblValNom, tfNom, "Minimum 2 caractères.");
+                else if (v.length() > 200)  showErr(hboxValNom, iconValNom, lblValNom, tfNom, v.length() + "/200 — trop long.");
+                else if (v.matches("\\d+")) showErr(hboxValNom, iconValNom, lblValNom, tfNom, "Pas uniquement des chiffres.");
+                else                        showOk(hboxValNom,  iconValNom,  lblValNom,  tfNom, "✓ " + v.length() + " caractères");
             });
 
+        // ── PRIX — DECIMAL(10,2) ──────────────────────────────────────────────
         if (tfPrix != null)
             tfPrix.textProperty().addListener((obs, o, n) -> {
-                if (n == null || n.isBlank()) {
-                    resetMsg(hboxValPrix, iconValPrix, lblValPrix);
-                    tfPrix.setStyle(BORDER_DEF); return;
+                String v = n == null ? "" : n.trim().replace(",", ".");
+                if (v.isEmpty()) { resetMsg(hboxValPrix, iconValPrix, lblValPrix); tfPrix.setStyle(BORDER_DEF); return; }
+                if (!v.matches("\\d*\\.?\\d*")) {
+                    showErr(hboxValPrix, iconValPrix, lblValPrix, tfPrix, "Chiffres uniquement (ex: 49.90)."); return;
+                }
+                if (v.matches("\\d+\\.\\d{3,}")) {
+                    showErr(hboxValPrix, iconValPrix, lblValPrix, tfPrix, "Max 2 décimales (DECIMAL 10,2)."); return;
                 }
                 try {
-                    BigDecimal v = new BigDecimal(n.trim());
-                    if (v.compareTo(BigDecimal.ZERO) <= 0)
+                    BigDecimal bd = new BigDecimal(v);
+                    if (bd.compareTo(BigDecimal.ZERO) <= 0)
                         showErr(hboxValPrix, iconValPrix, lblValPrix, tfPrix, "Le prix doit être > 0.");
+                    else if (bd.compareTo(new BigDecimal("9999999.99")) > 0)
+                        showErr(hboxValPrix, iconValPrix, lblValPrix, tfPrix, "Max 9 999 999.99 TND.");
                     else
-                        showOk(hboxValPrix, iconValPrix, lblValPrix, tfPrix, "Valide.");
+                        showOk(hboxValPrix, iconValPrix, lblValPrix, tfPrix, "✓ " + bd.toPlainString() + " TND");
                 } catch (NumberFormatException e) {
-                    showErr(hboxValPrix, iconValPrix, lblValPrix, tfPrix, "Format invalide (ex: 49.90).");
+                    showErr(hboxValPrix, iconValPrix, lblValPrix, tfPrix, "Nombre invalide.");
                 }
             });
 
+        // ── QUANTITE — INT ────────────────────────────────────────────────────
         if (tfQuantite != null)
             tfQuantite.textProperty().addListener((obs, o, n) -> {
-                if (n == null || n.isBlank()) {
-                    resetMsg(hboxValQuantite, iconValQuantite, lblValQuantite);
-                    tfQuantite.setStyle(BORDER_DEF); return;
+                String v = n == null ? "" : n.trim();
+                if (v.isEmpty()) { resetMsg(hboxValQuantite, iconValQuantite, lblValQuantite); tfQuantite.setStyle(BORDER_DEF); return; }
+                if (!v.matches("\\d+")) {
+                    showErr(hboxValQuantite, iconValQuantite, lblValQuantite, tfQuantite, "Entier positif — pas de lettres ni point."); return;
                 }
-                if (!n.trim().matches("\\d+"))
-                    showErr(hboxValQuantite, iconValQuantite, lblValQuantite, tfQuantite, "Entier >= 0 requis.");
-                else
-                    showOk(hboxValQuantite, iconValQuantite, lblValQuantite, tfQuantite, "Valide.");
+                try {
+                    int q = Integer.parseInt(v);
+                    if (q > 999_999) showErr(hboxValQuantite, iconValQuantite, lblValQuantite, tfQuantite, "Max 999 999 unités.");
+                    else             showOk(hboxValQuantite,  iconValQuantite,  lblValQuantite,  tfQuantite, "✓ " + q + " unité(s)");
+                } catch (NumberFormatException e) {
+                    showErr(hboxValQuantite, iconValQuantite, lblValQuantite, tfQuantite, "Entier invalide.");
+                }
             });
 
+        // ── CATEGORIE — VARCHAR ───────────────────────────────────────────────
         if (tfCategorie != null)
             tfCategorie.textProperty().addListener((obs, o, n) -> {
-                if (n == null || n.isBlank()) {
-                    resetMsg(hboxValCategorie, iconValCategorie, lblValCategorie);
-                    tfCategorie.setStyle(BORDER_DEF); return;
+                String v = n == null ? "" : n.trim();
+                if (v.isEmpty()) { resetMsg(hboxValCategorie, iconValCategorie, lblValCategorie); tfCategorie.setStyle(BORDER_DEF); return; }
+                if (v.length() < 2)                         showErr(hboxValCategorie, iconValCategorie, lblValCategorie, tfCategorie, "Minimum 2 caractères.");
+                else if (v.length() > 100)                  showErr(hboxValCategorie, iconValCategorie, lblValCategorie, tfCategorie, v.length() + "/100 — trop long.");
+                else if (!v.matches("[\\p{L}0-9 ,\\-_/]+")) showErr(hboxValCategorie, iconValCategorie, lblValCategorie, tfCategorie, "Caractères spéciaux non autorisés.");
+                else                                        showOk(hboxValCategorie,  iconValCategorie,  lblValCategorie,  tfCategorie, "✓ " + v);
+            });
+
+        // ── DESCRIPTION — TEXT : optionnel, coupe auto à 1000 chars ──────────
+        if (taDescription != null)
+            taDescription.textProperty().addListener((obs, o, n) -> {
+                if (n != null && n.length() > 1000) {
+                    taDescription.setText(n.substring(0, 1000));
+                    taDescription.positionCaret(1000);
                 }
-                if (n.trim().isEmpty())
-                    showErr(hboxValCategorie, iconValCategorie, lblValCategorie, tfCategorie, "Catégorie obligatoire.");
-                else
-                    showOk(hboxValCategorie, iconValCategorie, lblValCategorie, tfCategorie, "Valide.");
             });
     }
 
@@ -1164,14 +1245,11 @@ public class ProduitServiceController {
     }
 
     private void resetAllCrudValidation() {
-        resetMsg(hboxValIdProfile, iconValIdProfile, lblValIdProfile);
         resetMsg(hboxValNom,       iconValNom,       lblValNom);
         resetMsg(hboxValPrix,      iconValPrix,      lblValPrix);
         resetMsg(hboxValQuantite,  iconValQuantite,  lblValQuantite);
         resetMsg(hboxValCategorie, iconValCategorie, lblValCategorie);
         resetMsg(hboxMsgCrud,      iconMsgCrud,      lblMsgCrud);
-
-        if (tfIdProfile != null) tfIdProfile.setStyle(BORDER_DEF);
         if (tfNom       != null) tfNom.setStyle(BORDER_DEF);
         if (tfPrix      != null) tfPrix.setStyle(BORDER_DEF);
         if (tfQuantite  != null) tfQuantite.setStyle(BORDER_DEF);
