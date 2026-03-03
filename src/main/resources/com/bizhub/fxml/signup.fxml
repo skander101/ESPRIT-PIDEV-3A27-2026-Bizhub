@@ -9,7 +9,11 @@
 
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
+<<<<<<< HEAD
            fx:controller="com.bizhub.user.controller.SignupController"
+=======
+           fx:controller="com.bizhub.controller.users_avis.user.SignupController"
+>>>>>>> User-Java
            stylesheets="@../css/theme.css">
 
     <Pane styleClass="bg-gradient" />

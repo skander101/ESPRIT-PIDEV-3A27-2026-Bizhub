@@ -9,9 +9,15 @@
 
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
+<<<<<<< HEAD
             fx:controller="com.bizhub.formation.controller.FormationManagementController"
             fx:id="root"
             stylesheets="@../css/theme.css">
+=======
+            fx:controller="com.bizhub.controller.users_avis.formation.FormationManagementController"
+            fx:id="root"
+            stylesheets="@../css/theme.css, @../css/user-management.css">
+>>>>>>> User-Java
 
     <left>
         <!-- Admin must not use the non-admin sidebar; controller will swap to the right one at runtime. -->
@@ -19,7 +25,11 @@
     </left>
 
     <top>
+<<<<<<< HEAD
         <HBox spacing="12" alignment="CENTER_LEFT" styleClass="topbar">
+=======
+        <HBox fx:id="topbar" spacing="12" alignment="CENTER_LEFT" styleClass="topbar">
+>>>>>>> User-Java
             <padding>
                 <Insets top="14" right="16" bottom="14" left="16" />
             </padding>
@@ -35,6 +45,10 @@
                 <Text text="Browse &amp; manage" styleClass="subtitle" />
             </VBox>
             <Pane HBox.hgrow="ALWAYS" />
+<<<<<<< HEAD
+=======
+            <!-- User profile will be added here programmatically -->
+>>>>>>> User-Java
         </HBox>
     </top>
 

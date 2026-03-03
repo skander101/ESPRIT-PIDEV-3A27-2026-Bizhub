@@ -9,7 +9,11 @@
 
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
+<<<<<<< HEAD
       fx:controller="com.bizhub.user.controller.UserSidebarController"
+=======
+      fx:controller="com.bizhub.controller.users_avis.user.UserSidebarController"
+>>>>>>> User-Java
       spacing="12"
       styleClass="sidebar user-sidebar">
 
@@ -32,6 +36,7 @@
 
     <Separator opacity="0.25" />
 
+<<<<<<< HEAD
     <HBox spacing="10" alignment="CENTER_LEFT">
         <StackPane styleClass="sidebar-avatar">
             <ImageView fx:id="avatarView" fitWidth="36" fitHeight="36" preserveRatio="true" smooth="true" />
@@ -46,6 +51,10 @@
     <Separator opacity="0.35" />
 
     <Button text="My Profile" onAction="#goProfile" styleClass="nav-button" />
+=======
+
+    <Button fx:id="goProfileBtn" text="My Profile" onAction="#goProfile" styleClass="nav-button" />
+>>>>>>> User-Java
     <Button text="Formations" onAction="#goFormations" styleClass="nav-button" />
     <Button text="Reviews" onAction="#goReviews" styleClass="nav-button" />
 

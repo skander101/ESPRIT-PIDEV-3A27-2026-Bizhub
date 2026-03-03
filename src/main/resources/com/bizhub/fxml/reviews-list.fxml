@@ -7,9 +7,15 @@
 
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
+<<<<<<< HEAD
             fx:controller="com.bizhub.review.controller.ReviewManagementController"
             fx:id="root"
             stylesheets="@../css/theme.css">
+=======
+            fx:controller="com.bizhub.controller.users_avis.review.ReviewManagementController"
+            fx:id="root"
+            stylesheets="@../css/theme.css, @../css/user-management.css">
+>>>>>>> User-Java
 
     <left>
         <!-- Controller will swap this include to admin-sidebar.fxml when needed -->
@@ -17,7 +23,11 @@
     </left>
 
     <top>
+<<<<<<< HEAD
         <HBox spacing="12" alignment="CENTER_LEFT" styleClass="topbar">
+=======
+        <HBox fx:id="topbar" spacing="12" alignment="CENTER_LEFT" styleClass="topbar">
+>>>>>>> User-Java
             <padding>
                 <Insets top="14" right="16" bottom="14" left="16" />
             </padding>
@@ -28,6 +38,10 @@
             </VBox>
 
             <Pane HBox.hgrow="ALWAYS" />
+<<<<<<< HEAD
+=======
+            <!-- User profile will be added here programmatically -->
+>>>>>>> User-Java
         </HBox>
     </top>
 

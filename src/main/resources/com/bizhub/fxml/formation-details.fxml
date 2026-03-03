@@ -7,18 +7,30 @@
 
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
+<<<<<<< HEAD
             fx:controller="com.bizhub.formation.controller.FormationDetailsController"
             stylesheets="@../css/theme.css">
 
     <top>
         <HBox spacing="12" alignment="CENTER_LEFT" styleClass="topbar">
+=======
+            fx:controller="com.bizhub.controller.users_avis.formation.FormationDetailsController"
+            stylesheets="@../css/theme.css">
+
+    <top>
+        <HBox fx:id="topbar" spacing="12" alignment="CENTER_LEFT" styleClass="topbar">
+>>>>>>> User-Java
             <padding>
                 <Insets top="14" right="16" bottom="14" left="16" />
             </padding>
 
             <Text text="Formation details" styleClass="h1" />
             <Pane HBox.hgrow="ALWAYS" />
+<<<<<<< HEAD
             <Button text="Back" onAction="#goBack" styleClass="btn" />
+=======
+            <!-- User profile will be added here programmatically -->
+>>>>>>> User-Java
         </HBox>
     </top>
 
@@ -60,7 +72,11 @@
 
             <VBox styleClass="card" spacing="10" VBox.vgrow="ALWAYS">
                 <Text text="Reviews" styleClass="h2" />
+<<<<<<< HEAD
                 <TableView fx:id="reviewsTable" VBox.vgrow="ALWAYS">
+=======
+                <TableView fx:id="reviewsTable" VBox.vgrow="ALWAYS" styleClass="reviews-table">
+>>>>>>> User-Java
                     <columns>
                         <TableColumn fx:id="colReviewer" text="Reviewer" prefWidth="240" />
                         <TableColumn fx:id="colRating" text="Rating" prefWidth="90" />
