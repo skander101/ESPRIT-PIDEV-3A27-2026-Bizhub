@@ -4,6 +4,7 @@ import com.bizhub.model.community.comment.Comment;
 import com.bizhub.model.community.post.Post;
 import com.bizhub.model.services.community.comment.CommentService;
 import com.bizhub.model.services.community.post.PostService;
+import com.bizhub.model.services.community.ai.GeminiService;
 import com.bizhub.model.services.common.service.AppSession;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -71,6 +72,7 @@ public class ShowPostsController {
     private final CommentService commentService = new CommentService();
     private final com.bizhub.model.services.community.geo.GeoLocationService geoService =
             new com.bizhub.model.services.community.geo.GeoLocationService();
+    private final GeminiService geminiService = new GeminiService();
 
     private Post editingPost = null;
     private Post currentPost = null;
@@ -609,7 +611,11 @@ public class ShowPostsController {
             btnComment.setStyle("-fx-background-color:#1A3352;-fx-text-fill:#FFB84D;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:5 12;");
             btnComment.setOnAction(e -> openComments(post));
 
-            HBox actions = new HBox(8, btnComment);
+            // ✨ Ask AI button
+            Button btnAI = new Button("✨ Ask AI");
+            btnAI.setStyle("-fx-background-color:#1A2A4A;-fx-text-fill:#A78BFA;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:5 12;-fx-border-color:#4C3A8A;-fx-border-radius:6;-fx-border-width:1;");
+
+            HBox actions = new HBox(8, btnComment, btnAI);
 
             if (canEdit(post.getUserId())) {
                 Button btnEdit   = new Button("✏ Edit");
@@ -620,6 +626,108 @@ public class ShowPostsController {
                 btnDelete.setOnAction(e -> deletePost(post));
                 actions.getChildren().addAll(btnEdit, btnDelete);
             }
+
+            // --- AI Panel (hidden by default, toggles on btnAI click) ---
+            VBox aiPanel = new VBox(8);
+            aiPanel.setVisible(false);
+            aiPanel.setManaged(false);
+            aiPanel.setStyle(
+                    "-fx-background-color:#0D1B2E;" +
+                            "-fx-border-color:#4C3A8A;" +
+                            "-fx-border-width:1;" +
+                            "-fx-border-radius:8;" +
+                            "-fx-background-radius:8;" +
+                            "-fx-padding:12;"
+            );
+
+            // Quick action buttons row
+            Button btnFactCheck  = new Button("🔍 Fact-check");
+            Button btnSummarize  = new Button("📝 Summarize");
+            Button btnTopics     = new Button("🏷 Suggest Topics");
+            String quickBtnStyle = "-fx-background-color:#1A2A4A;-fx-text-fill:#A78BFA;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:11px;-fx-padding:4 10;-fx-border-color:#4C3A8A;-fx-border-radius:6;-fx-border-width:1;";
+            btnFactCheck.setStyle(quickBtnStyle);
+            btnSummarize.setStyle(quickBtnStyle);
+            btnTopics.setStyle(quickBtnStyle);
+
+            HBox quickActions = new HBox(6, btnFactCheck, btnSummarize, btnTopics);
+
+            // Custom question row
+            TextField questionField = new TextField();
+            questionField.setPromptText("Ask anything about this post...");
+            questionField.setStyle("-fx-background-color:#1A3352;-fx-text-fill:white;-fx-prompt-text-fill:#607A93;-fx-background-radius:6;-fx-border-radius:6;-fx-border-color:#4C3A8A;-fx-padding:6 10;");
+            HBox.setHgrow(questionField, Priority.ALWAYS);
+
+            Button btnAsk = new Button("Ask");
+            btnAsk.setStyle("-fx-background-color:#4C3A8A;-fx-text-fill:white;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:6 14;");
+
+            HBox askRow = new HBox(8, questionField, btnAsk);
+            askRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+            // AI response area
+            Label aiResponse = new Label("Choose an action or ask a question above.");
+            aiResponse.setStyle("-fx-text-fill:#C4B5FD;-fx-font-size:12px;-fx-wrap-text:true;");
+            aiResponse.setWrapText(true);
+            aiResponse.setMaxWidth(460);
+
+            // Loading indicator
+            Label loadingLabel = new Label("⏳ Thinking...");
+            loadingLabel.setStyle("-fx-text-fill:#607A93;-fx-font-size:12px;");
+            loadingLabel.setVisible(false);
+            loadingLabel.setManaged(false);
+
+            aiPanel.getChildren().addAll(quickActions, askRow, loadingLabel, aiResponse);
+
+            // Helper to call Gemini on background thread
+            Runnable[] pendingTask = {null};
+            java.util.function.Consumer<java.util.concurrent.Callable<String>> runAI = task -> {
+                aiResponse.setText("");
+                loadingLabel.setVisible(true);
+                loadingLabel.setManaged(true);
+                btnFactCheck.setDisable(true);
+                btnSummarize.setDisable(true);
+                btnTopics.setDisable(true);
+                btnAsk.setDisable(true);
+                new Thread(() -> {
+                    String result;
+                    try { result = task.call(); }
+                    catch (Exception ex) { result = "⚠ Error: " + ex.getMessage(); }
+                    final String finalResult = result;
+                    javafx.application.Platform.runLater(() -> {
+                        loadingLabel.setVisible(false);
+                        loadingLabel.setManaged(false);
+                        aiResponse.setText(finalResult);
+                        btnFactCheck.setDisable(false);
+                        btnSummarize.setDisable(false);
+                        btnTopics.setDisable(false);
+                        btnAsk.setDisable(false);
+                    });
+                }).start();
+            };
+
+            btnFactCheck.setOnAction(e -> runAI.accept(() ->
+                    geminiService.factCheck(post.getTitle(), post.getContent())));
+            btnSummarize.setOnAction(e -> runAI.accept(() ->
+                    geminiService.summarize(post.getTitle(), post.getContent())));
+            btnTopics.setOnAction(e -> runAI.accept(() ->
+                    geminiService.suggestTopics(post.getTitle(), post.getContent())));
+            btnAsk.setOnAction(e -> {
+                String q = questionField.getText().trim();
+                if (!q.isEmpty()) runAI.accept(() ->
+                        geminiService.askAboutPost(post.getTitle(), post.getContent(), q));
+            });
+            questionField.setOnAction(e -> btnAsk.fire());
+
+            // Toggle AI panel visibility
+            btnAI.setOnAction(e -> {
+                boolean show = !aiPanel.isVisible();
+                aiPanel.setVisible(show);
+                aiPanel.setManaged(show);
+                btnAI.setText(show ? "✨ Hide AI" : "✨ Ask AI");
+                btnAI.setStyle(show
+                        ? "-fx-background-color:#4C3A8A;-fx-text-fill:white;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:5 12;"
+                        : "-fx-background-color:#1A2A4A;-fx-text-fill:#A78BFA;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:5 12;-fx-border-color:#4C3A8A;-fx-border-radius:6;-fx-border-width:1;"
+                );
+            });
 
             HBox meta = new HBox(8, authorLabel, cat, date);
             if (post.getLocation() != null && !post.getLocation().isBlank()) {
@@ -669,7 +777,7 @@ public class ShowPostsController {
                 }
             }
 
-            card.getChildren().add(actions);
+            card.getChildren().addAll(actions, aiPanel);
             card.setStyle(
                     "-fx-background-color:#112236;" +
                             "-fx-background-radius:14;" +
