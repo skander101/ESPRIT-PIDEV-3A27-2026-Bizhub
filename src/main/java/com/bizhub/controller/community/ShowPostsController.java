@@ -12,7 +12,9 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
+import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 
 import java.io.File;
@@ -47,6 +49,13 @@ public class ShowPostsController {
     @FXML private Label formError;
     @FXML private Label mediaLabel;
     @FXML private Button clearMediaBtn;
+    @FXML private TextField locationField;
+
+    // Location state — set when user picks from dropdown
+    private String selectedLocation = null;
+    private double selectedLat = 0;
+    private double selectedLon = 0;
+    private final ContextMenu locationMenu = new ContextMenu();
 
     // Comments overlay
     @FXML private StackPane commentsOverlay;
@@ -62,6 +71,8 @@ public class ShowPostsController {
 
     private final PostService postService = new PostService();
     private final CommentService commentService = new CommentService();
+    private final com.bizhub.model.services.community.geo.GeoLocationService geoService =
+            new com.bizhub.model.services.community.geo.GeoLocationService();
 
     private Post editingPost = null;
     private Post currentPost = null;
@@ -113,6 +124,40 @@ public class ShowPostsController {
         // Live search — filters as user types
         searchField.textProperty().addListener((obs, oldVal, newVal) -> applyFilters());
 
+        // Location autocomplete using ContextMenu — floats above all other nodes
+        locationMenu.setStyle("-fx-background-color:#1A3352;");
+        locationField.textProperty().addListener((obs, oldVal, newVal) -> {
+            locationMenu.hide();
+            selectedLocation = null;
+            selectedLat = 0;
+            selectedLon = 0;
+            if (newVal != null && newVal.trim().length() >= 2) {
+                new Thread(() -> {
+                    java.util.List<com.bizhub.model.services.community.geo.GeoLocationService.LocationResult>
+                            suggestions = geoService.searchLocations(newVal);
+                    javafx.application.Platform.runLater(() -> {
+                        locationMenu.getItems().clear();
+                        if (!suggestions.isEmpty()) {
+                            for (var result : suggestions) {
+                                MenuItem item = new MenuItem("📍 " + result.displayName);
+                                item.setStyle("-fx-text-fill:white;-fx-background-color:#1A3352;");
+                                item.setOnAction(ev -> {
+                                    selectedLocation = result.displayName;
+                                    selectedLat = result.lat;
+                                    selectedLon = result.lon;
+                                    locationField.setText(result.displayName);
+                                    locationMenu.hide();
+                                });
+                                locationMenu.getItems().add(item);
+                            }
+                            locationMenu.show(locationField,
+                                    javafx.geometry.Side.BOTTOM, 0, 0);
+                        }
+                    });
+                }).start();
+            }
+        });
+
         // Cell factories
         postsList.setCellFactory(lv -> new PostCard());
         commentsList.setCellFactory(lv -> new CommentCard());
@@ -130,6 +175,11 @@ public class ShowPostsController {
         contentArea.clear();
         categoryCombo.setValue("General");
         formError.setText("");
+        locationField.clear();
+        locationMenu.hide();
+        selectedLocation = null;
+        selectedLat = 0;
+        selectedLon = 0;
         onClearMedia();
         showForm(true);
     }
@@ -157,6 +207,11 @@ public class ShowPostsController {
         } else {
             onClearMedia();
         }
+        // Load existing location
+        selectedLocation = post.getLocation();
+        selectedLat = post.getLocationLat();
+        selectedLon = post.getLocationLon();
+        locationField.setText(post.getLocation() != null ? post.getLocation() : "");
         showForm(true);
     }
 
@@ -239,6 +294,9 @@ public class ShowPostsController {
                 Post p = new Post(userId, title, content, category);
                 p.setMediaUrl(selectedMediaUrl);
                 p.setMediaType(selectedMediaType);
+                p.setLocation(selectedLocation != null ? selectedLocation : locationField.getText().trim());
+                p.setLocationLat(selectedLat);
+                p.setLocationLon(selectedLon);
                 postService.create(p);
             } else {
                 editingPost.setTitle(title);
@@ -246,6 +304,9 @@ public class ShowPostsController {
                 editingPost.setCategory(category);
                 editingPost.setMediaUrl(selectedMediaUrl);
                 editingPost.setMediaType(selectedMediaType);
+                editingPost.setLocation(selectedLocation != null ? selectedLocation : locationField.getText().trim());
+                editingPost.setLocationLat(selectedLat);
+                editingPost.setLocationLon(selectedLon);
                 postService.update(editingPost);
             }
             showForm(false);
@@ -334,6 +395,69 @@ public class ShowPostsController {
     }
 
     // ==================== REFRESH ====================
+
+    /** Opens a floating map popup showing the location on OpenStreetMap */
+    private void showMapPopup(String locationName, double lat, double lon, javafx.scene.Node anchor) {
+        // Use coordinates if available, otherwise search by name
+        double mapLat = lat != 0 ? lat : 36.8;
+        double mapLon = lon != 0 ? lon : 10.18;
+        int zoom = lat != 0 ? 13 : 5;
+
+        WebView webView = new WebView();
+        webView.setPrefSize(420, 300);
+
+        String html =
+                "<!DOCTYPE html><html><head>" +
+                        "<link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'/>" +
+                        "<script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>" +
+                        "<style>body{margin:0;padding:0;}#map{width:420px;height:300px;}</style>" +
+                        "</head><body><div id='map'></div><script>" +
+                        "var map = L.map('map').setView([" + mapLat + "," + mapLon + "]," + zoom + ");" +
+                        "L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{" +
+                        "  attribution:'© OpenStreetMap'}).addTo(map);" +
+                        (lat != 0 ?
+                                "L.marker([" + mapLat + "," + mapLon + "]).addTo(map)" +
+                                        "  .bindPopup('" + locationName.replace("'", "\\'") + "').openPopup();" : "") +
+                        "</script></body></html>";
+
+        webView.getEngine().loadContent(html);
+
+        // Popup container
+        javafx.scene.layout.VBox container = new javafx.scene.layout.VBox();
+        container.setStyle(
+                "-fx-background-color:#0F2035;" +
+                        "-fx-border-color:#FFB84D;" +
+                        "-fx-border-width:2;" +
+                        "-fx-border-radius:10;" +
+                        "-fx-background-radius:10;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 20, 0, 0, 4);"
+        );
+
+        // Header bar
+        Label header = new Label("📍  " + locationName);
+        header.setStyle("-fx-text-fill:#FFB84D;-fx-font-weight:bold;-fx-font-size:13px;-fx-padding:8 12 4 12;");
+        Button closeBtn = new Button("✕");
+        closeBtn.setStyle("-fx-background-color:transparent;-fx-text-fill:#607A93;-fx-cursor:hand;-fx-font-size:13px;");
+
+        javafx.scene.layout.HBox topBar = new javafx.scene.layout.HBox();
+        topBar.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        javafx.scene.layout.HBox.setHgrow(header, Priority.ALWAYS);
+        topBar.getChildren().addAll(header, closeBtn);
+
+        container.getChildren().addAll(topBar, webView);
+
+        Popup popup = new Popup();
+        popup.getContent().add(container);
+        popup.setAutoHide(true);
+
+        closeBtn.setOnAction(e -> popup.hide());
+
+        // Position near the anchor label
+        javafx.geometry.Bounds bounds = anchor.localToScreen(anchor.getBoundsInLocal());
+        popup.show(anchor.getScene().getWindow(),
+                bounds.getMinX(),
+                bounds.getMaxY() + 4);
+    }
 
     public void refreshPosts() {
         try {
@@ -543,6 +667,23 @@ public class ShowPostsController {
             }
 
             HBox meta = new HBox(8, authorLabel, cat, date);
+            if (post.getLocation() != null && !post.getLocation().isBlank()) {
+                Label loc = new Label("📍 " + post.getLocation());
+                loc.setStyle(
+                        "-fx-text-fill:#4CAF50;-fx-font-size:11px;" +
+                                "-fx-cursor:hand;" +
+                                "-fx-underline:true;"
+                );
+                loc.setTooltip(new Tooltip("Click to view on map"));
+
+                loc.setOnMouseClicked(e -> showMapPopup(
+                        post.getLocation(),
+                        post.getLocationLat(),
+                        post.getLocationLon(),
+                        loc
+                ));
+                meta.getChildren().add(loc);
+            }
             meta.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
             HBox header = new HBox(12, avatar, new VBox(4, meta, title));

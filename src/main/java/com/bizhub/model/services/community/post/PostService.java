@@ -17,7 +17,7 @@ public class PostService {
     }
 
     public void create(Post post) throws SQLException {
-        String sql = "INSERT INTO post (user_id, title, content, category, media_url, media_type) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO post (user_id, title, content, category, media_url, media_type, location, location_lat, location_lon) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pst = cnx.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pst.setInt(1, post.getUserId());
             pst.setString(2, post.getTitle());
@@ -25,6 +25,9 @@ public class PostService {
             pst.setString(4, post.getCategory());
             pst.setString(5, post.getMediaUrl());
             pst.setString(6, post.getMediaType());
+            pst.setString(7, post.getLocation());
+            pst.setObject(8, post.getLocationLat() != 0 ? post.getLocationLat() : null);
+            pst.setObject(9, post.getLocationLon() != 0 ? post.getLocationLon() : null);
             pst.executeUpdate();
             try (ResultSet rs = pst.getGeneratedKeys()) {
                 if (rs.next()) post.setPostId(rs.getInt(1));
@@ -55,14 +58,17 @@ public class PostService {
     }
 
     public void update(Post post) throws SQLException {
-        String sql = "UPDATE post SET title=?, content=?, category=?, media_url=?, media_type=? WHERE post_id=?";
+        String sql = "UPDATE post SET title=?, content=?, category=?, media_url=?, media_type=?, location=?, location_lat=?, location_lon=? WHERE post_id=?";
         try (PreparedStatement pst = cnx.prepareStatement(sql)) {
             pst.setString(1, post.getTitle());
             pst.setString(2, post.getContent());
             pst.setString(3, post.getCategory());
             pst.setString(4, post.getMediaUrl());
             pst.setString(5, post.getMediaType());
-            pst.setInt(6, post.getPostId());
+            pst.setString(6, post.getLocation());
+            pst.setObject(7, post.getLocationLat() != 0 ? post.getLocationLat() : null);
+            pst.setObject(8, post.getLocationLon() != 0 ? post.getLocationLon() : null);
+            pst.setInt(9, post.getPostId());
             pst.executeUpdate();
         }
     }
@@ -87,6 +93,9 @@ public class PostService {
         try { p.setAuthorName(rs.getString("author_name")); } catch (SQLException ignored) {}
         try { p.setMediaUrl(rs.getString("media_url")); } catch (SQLException ignored) {}
         try { p.setMediaType(rs.getString("media_type")); } catch (SQLException ignored) {}
+        try { p.setLocation(rs.getString("location")); } catch (SQLException ignored) {}
+        try { p.setLocationLat(rs.getDouble("location_lat")); } catch (SQLException ignored) {}
+        try { p.setLocationLon(rs.getDouble("location_lon")); } catch (SQLException ignored) {}
         return p;
     }
 }

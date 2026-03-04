@@ -73,6 +73,12 @@
             <version>${javafx.version}</version>
             <classifier>${javafx.platform}</classifier>
         </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
+        </dependency>
 
         <!-- Security -->
         <dependency>
@@ -102,7 +108,12 @@
             <version>3.0.0</version>
         </dependency>
 
-        <!-- TOTP -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
+        </dependency>
         <dependency>
             <groupId>dev.samstevens.totp</groupId>
             <artifactId>totp</artifactId>
@@ -123,7 +134,7 @@
                         <option>--module-path</option>
                         <option>D:\Esprit\3EME\SGBD\javafx-sdk-25.0.2\lib</option>
                         <option>--add-modules</option>
-                        <option>javafx.controls,javafx.fxml,javafx.media</option>
+                        <option>javafx.controls,javafx.fxml,javafx.media,javafx.web</option>
                     </options>
                 </configuration>
             </plugin>

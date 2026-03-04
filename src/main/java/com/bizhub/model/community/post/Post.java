@@ -10,8 +10,11 @@ public class Post {
     private String category;
     private LocalDateTime createdAt;
     private String authorName; // joined from user table, not a DB column
-    private String mediaUrl;   // path to image or video file
-    private String mediaType;  // "image" or "video"
+    private String mediaUrl;
+    private String mediaType;
+    private String location;
+    private double locationLat;  // from Nominatim
+    private double locationLon;  // from Nominatim
 
     public Post() {}
 
@@ -48,6 +51,15 @@ public class Post {
 
     public String getMediaType() { return mediaType; }
     public void setMediaType(String mediaType) { this.mediaType = mediaType; }
+
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+
+    public double getLocationLat() { return locationLat; }
+    public void setLocationLat(double locationLat) { this.locationLat = locationLat; }
+
+    public double getLocationLon() { return locationLon; }
+    public void setLocationLon(double locationLon) { this.locationLon = locationLon; }
 
     @Override
     public String toString() {

@@ -93,6 +93,10 @@
 
                     <Label fx:id="formError" styleClass="error-text" text="" wrapText="true"/>
 
+                    <Label styleClass="hint" text="📍 Location (optional)"/>
+                    <TextField fx:id="locationField" promptText="Search city, country..."
+                               styleClass="profile-field"/>
+
                     <Label styleClass="hint" text="Photo / Video (optional)"/>
                     <HBox spacing="10" alignment="CENTER_LEFT">
                         <Button text="📎 Attach File" onAction="#onPickMedia" styleClass="btn"/>
