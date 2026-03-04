@@ -4,10 +4,11 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
+<?import javafx.scene.web.WebView?>
 
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.bizhub.controller.users_avis.formation.FormationFormController"
+      fx:controller="com.bizhub.controller.elearning.formation.FormationFormController"
       spacing="12" stylesheets="@../css/theme.css" styleClass="card">
 
     <padding>
@@ -37,16 +38,25 @@
         <Label text="Cost" GridPane.rowIndex="4" GridPane.columnIndex="0" />
         <TextField fx:id="costField" promptText="0.00" GridPane.rowIndex="4" GridPane.columnIndex="1" />
 
-        <Label text="Description" GridPane.rowIndex="5" GridPane.columnIndex="0" />
-        <TextArea fx:id="descriptionArea" prefRowCount="3" wrapText="true" GridPane.rowIndex="5" GridPane.columnIndex="1" />
+        <Label text="Lieu" GridPane.rowIndex="5" GridPane.columnIndex="0" />
+        <TextField fx:id="lieuField" promptText="Adresse ou lat, lng" GridPane.rowIndex="5" GridPane.columnIndex="1" />
+
+        <Label text="En ligne" GridPane.rowIndex="6" GridPane.columnIndex="0" />
+        <CheckBox fx:id="enLigneCheck" GridPane.rowIndex="6" GridPane.columnIndex="1" />
+
+        <Label text="Description" GridPane.rowIndex="7" GridPane.columnIndex="0" />
+        <TextArea fx:id="descriptionArea" prefRowCount="3" wrapText="true" GridPane.rowIndex="7" GridPane.columnIndex="1" />
 
     </GridPane>
+
+    <!-- Leaflet map for picking location (hidden when "En ligne" is checked) -->
+    <WebView fx:id="mapView" prefHeight="250" />
 
     <Label fx:id="errorLabel" text="" styleClass="error-text" wrapText="true" />
 
     <HBox spacing="10" alignment="CENTER_RIGHT">
         <Button text="Cancel" onAction="#cancel" styleClass="btn" />
-        <Button fx:id="saveButton" text="Generate Image (Free)" onAction="#generateImage" styleClass="btn-primary" />
+        <Button fx:id="saveButton" text="Save" onAction="#save" styleClass="btn-primary" />
     </HBox>
 
 </VBox>

@@ -38,6 +38,10 @@
     -fx-box-border: #E8A93A59;
 }
 
+.label {
+    -fx-text-fill: #FFFFFF;
+}
+
 /* Color Reference (for maintainability):
  * Gold: #E8A93A
  * Bright Gold: #FDB813
@@ -358,7 +362,7 @@
  * bordered look from user-management.css.                                   */
 .sidebar .button {
     -fx-background-color: transparent;
-    -fx-text-fill: #FFB84D;
+    -fx-text-fill: #FFFFFF;
     -fx-font-weight: 800;
     -fx-font-size: 16px;
     -fx-padding: 16 20;

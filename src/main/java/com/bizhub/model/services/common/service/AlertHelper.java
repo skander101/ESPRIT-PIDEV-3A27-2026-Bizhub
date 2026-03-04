@@ -32,9 +32,21 @@ public class AlertHelper {
             -fx-font-weight: 800;
         }
         .dialog-pane > .content.label {
-            -fx-text-fill: #FFB84D;
+            -fx-text-fill: #FFFFFF;
             -fx-font-size: 15px;
             -fx-padding: 16 0;
+        }
+        .dialog-pane .label {
+            -fx-text-fill: #FFFFFF;
+        }
+        .dialog-pane .text {
+            -fx-fill: #FFFFFF;
+        }
+        .dialog-pane > .content {
+            -fx-text-fill: #FFFFFF;
+        }
+        .dialog-pane > .expandable-content {
+            -fx-text-fill: #FFFFFF;
         }
         .dialog-pane > .button-bar > .container {
             -fx-background-color: transparent;
@@ -63,22 +75,8 @@ public class AlertHelper {
         .dialog-pane > .button-bar .button:default:hover {
             -fx-background-color: linear-gradient(to bottom, #FFE082, #FFD54F);
         }
-        .dialog-pane:header .header-panel .label {
-            -fx-text-fill: #FFFFFF;
-        }
         .dialog-pane .graphic-container {
             -fx-padding: 0 10 0 0;
-        }
-        /* Style for the header text */
-        .dialog-pane > .header-panel > .header-panel > .label {
-            -fx-text-fill: #FFFFFF;
-        }
-        /* Make sure all text is visible */
-        .dialog-pane .label {
-            -fx-text-fill: #FFB84D;
-        }
-        .dialog-pane > .header-panel .label {
-            -fx-text-fill: #FFFFFF;
         }
         """;
 
@@ -90,6 +88,23 @@ public class AlertHelper {
         dialogPane.setStyle("-fx-background-color: #0A192F;");
         dialogPane.getStylesheets().clear();
         dialogPane.getStylesheets().add("data:text/css," + DIALOG_STYLE.replace("\n", "").replace("  ", " "));
+
+        // Force white text on all labels and text nodes inside the dialog
+        dialogPane.applyCss();
+        dialogPane.lookupAll(".label").forEach(node ->
+                node.setStyle("-fx-text-fill: #FFFFFF;"));
+        dialogPane.lookupAll(".text").forEach(node ->
+                node.setStyle("-fx-fill: #FFFFFF;"));
+
+        // Also set it on showing, since content may be set after styleAlert is called
+        alert.setOnShowing(e -> {
+            dialogPane.lookupAll(".label").forEach(node ->
+                    node.setStyle("-fx-text-fill: #FFFFFF;"));
+            dialogPane.lookupAll(".text").forEach(node ->
+                    node.setStyle("-fx-fill: #FFFFFF;"));
+            dialogPane.lookupAll(".content").forEach(node ->
+                    node.setStyle("-fx-text-fill: #FFFFFF;"));
+        });
 
         // Remove default window decorations for a cleaner look
         alert.initStyle(StageStyle.UNDECORATED);

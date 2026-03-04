@@ -1,7 +1,9 @@
 package com.bizhub.model.services.common.service;
 
 import com.bizhub.model.services.common.DB.MyDatabase;
-import com.bizhub.model.services.user_avis.formation.FormationService;
+import com.bizhub.model.services.elearning.formation.FormationService;
+import com.bizhub.model.services.elearning.participation.ParticipationService;
+import com.bizhub.model.services.elearning.payment.PaymentService;
 import com.bizhub.model.services.user_avis.review.ReviewService;
 import com.bizhub.model.services.user_avis.user.UserService;
 
@@ -24,6 +26,10 @@ public final class Services {
     private static InfobipService infobipService;
     private static TotpService totpService;
     private static CloudflareAiService cloudflareAiService;
+    private static ParticipationService participationService;
+    private static PaymentService paymentService;
+    private static FormationEmailService formationEmailService;
+    private static GoogleMeetService googleMeetService;
 
     private Services() {
     }
@@ -103,5 +109,33 @@ public final class Services {
             cloudflareAiService = new CloudflareAiService();
         }
         return cloudflareAiService;
+    }
+
+    public static synchronized ParticipationService participations() {
+        if (participationService == null) {
+            participationService = new ParticipationService();
+        }
+        return participationService;
+    }
+
+    public static synchronized PaymentService payments() {
+        if (paymentService == null) {
+            paymentService = new PaymentService();
+        }
+        return paymentService;
+    }
+
+    public static synchronized FormationEmailService email() {
+        if (formationEmailService == null) {
+            formationEmailService = new FormationEmailService();
+        }
+        return formationEmailService;
+    }
+
+    public static synchronized GoogleMeetService googleMeet() {
+        if (googleMeetService == null) {
+            googleMeetService = new GoogleMeetService();
+        }
+        return googleMeetService;
     }
 }

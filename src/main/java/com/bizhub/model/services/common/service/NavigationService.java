@@ -36,7 +36,8 @@ public class NavigationService {
         MARKETPLACE,
         PANIER,
         TRACKING,
-        INVESTISSEMENTS
+        INVESTISSEMENTS,
+        PARTICIPATIONS
     }
 
     public static void setActiveNav(Node sidebarRoot, ActiveNav activeNav) {
@@ -60,6 +61,7 @@ public class NavigationService {
                 case PANIER -> t.contains("panier") || t.contains("cart");
                 case TRACKING -> t.contains("tracking") || t.contains("suivi");
                 case INVESTISSEMENTS -> t.contains("investissement");
+                case PARTICIPATIONS -> t.contains("participation");
             };
 
             if (match) {
@@ -124,6 +126,11 @@ public class NavigationService {
 
     public void goToFormationDetails() {
         loadIntoStage("/com/bizhub/fxml/formation-details.fxml", 1200, 760);
+    }
+
+    // ====== PARTICIPATIONS ======
+    public void goToParticipations() {
+        loadIntoStage("/com/bizhub/fxml/participations.fxml", 1200, 760);
     }
 
     public void goToCommunity() {

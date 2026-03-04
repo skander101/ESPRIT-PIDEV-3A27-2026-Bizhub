@@ -2,7 +2,7 @@ package com.bizhub.controller.users_avis.review;
 
 import com.bizhub.controller.users_avis.user.SidebarController;
 import com.bizhub.model.services.common.service.*;
-import com.bizhub.model.users_avis.formation.Formation;
+import com.bizhub.model.elearning.formation.Formation;
 import com.bizhub.model.users_avis.review.Review;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.bizhub.controller.elearning.payment.PaymentController"
+      spacing="16" stylesheets="@../css/theme.css" styleClass="card,payment-dialog">
+
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <Text fx:id="titleText" text="Paiement participation" styleClass="h1"/>
+
+    <GridPane hgap="12" vgap="8">
+        <columnConstraints>
+            <ColumnConstraints percentWidth="28"/>
+            <ColumnConstraints percentWidth="72"/>
+        </columnConstraints>
+        <Label text="Formation" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <Label fx:id="formationLabel" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+        <Label text="Montant" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <Label fx:id="amountLabel" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+        <Label text="Méthode" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="methodBox" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+        <Label text="Statut" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <Label fx:id="statusLabel" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+    </GridPane>
+
+    <!-- Formulaire "Payez en ligne" type carte (visible quand méthode = Carte bancaire) -->
+    <VBox fx:id="cardFormBox" spacing="16" visible="false" managed="false" styleClass="payment-form">
+        <Separator/>
+        <HBox alignment="CENTER_LEFT" spacing="8">
+            <Text text="Payez en ligne" styleClass="pay-online-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="secureBadge" text="✓ Paiement sécurisé" styleClass="secure-badge"/>
+        </HBox>
+
+        <HBox alignment="CENTER_LEFT" spacing="12" styleClass="card-logos">
+            <Label text="VISA" styleClass="card-logo"/>
+            <Label text="Mastercard" styleClass="card-logo"/>
+            <Label text="CB" styleClass="card-logo"/>
+        </HBox>
+
+        <VBox spacing="6">
+            <Label text="Nom sur la carte"/>
+            <TextField fx:id="cardHolderNameField" promptText="Nom" maxWidth="Infinity"/>
+        </VBox>
+        <VBox spacing="6">
+            <Label text="N° de carte"/>
+            <TextField fx:id="cardNumberField" promptText="**** **** **** ****" maxWidth="Infinity"/>
+        </VBox>
+        <HBox spacing="12">
+            <VBox spacing="6" HBox.hgrow="ALWAYS">
+                <Label text="Date d'expiration"/>
+                <HBox spacing="4" alignment="CENTER_LEFT">
+                    <TextField fx:id="cardMonthField" promptText="MM" maxWidth="60"/>
+                    <Label text="/" style="-fx-padding: 0 4 0 0;"/>
+                    <TextField fx:id="cardYearField" promptText="AA" maxWidth="60"/>
+                </HBox>
+            </VBox>
+            <VBox spacing="6" HBox.hgrow="ALWAYS">
+                <Label text="Cryptogramme visuel"/>
+                <VBox spacing="2">
+                    <TextField fx:id="cardCvvField" promptText="•••" maxWidth="120"/>
+                    <Hyperlink fx:id="cvvHelpLink" text="De quoi s'agit-il ?" onAction="#showCvvHelp"/>
+                </VBox>
+            </VBox>
+        </HBox>
+    </VBox>
+
+    <Label fx:id="errorLabel" text="" styleClass="error-text" wrapText="true"/>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Annuler" onAction="#cancel" styleClass="btn"/>
+        <Button fx:id="payButton" text="Payer" onAction="#pay" styleClass="btn-primary"/>
+    </HBox>
+
+</VBox>
+

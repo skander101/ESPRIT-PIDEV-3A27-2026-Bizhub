@@ -159,7 +159,7 @@
 }
 
 .topbar-avatar-text {
-    -fx-fill: #0A192F;
+    -fx-fill: #FFFFFF;
     -fx-font-weight: 900;
     -fx-font-size: 16px;
 }
@@ -286,7 +286,7 @@
 }
 
 .user-avatar-text {
-    -fx-fill: #FFB84D;
+    -fx-fill: #FFFFFF;
     -fx-font-weight: bold;
     -fx-font-size: 22px;
 }
@@ -298,7 +298,7 @@
 }
 
 .user-meta {
-    -fx-text-fill: #FFB84D;
+    -fx-text-fill: #FFFFFF;
     -fx-font-size: 14px;
 }
 
