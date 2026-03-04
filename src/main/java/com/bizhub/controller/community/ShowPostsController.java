@@ -5,6 +5,7 @@ import com.bizhub.model.community.post.Post;
 import com.bizhub.model.services.community.comment.CommentService;
 import com.bizhub.model.services.community.post.PostService;
 import com.bizhub.model.services.community.ai.GeminiService;
+import com.bizhub.model.services.community.reaction.ReactionService;
 import com.bizhub.model.services.common.service.AppSession;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -70,6 +71,7 @@ public class ShowPostsController {
 
     private final PostService postService = new PostService();
     private final CommentService commentService = new CommentService();
+    private final ReactionService reactionService = new ReactionService();
     private final com.bizhub.model.services.community.geo.GeoLocationService geoService =
             new com.bizhub.model.services.community.geo.GeoLocationService();
     private final GeminiService geminiService = new GeminiService();
@@ -109,7 +111,8 @@ public class ShowPostsController {
                 "Oldest First",
                 "Title A → Z",
                 "Title Z → A",
-                "Most Commented"
+                "Most Commented",
+                "Most Popular"
         );
         sortCombo.setValue("Newest First");
         sortCombo.setOnAction(e -> applyFilters());
@@ -464,12 +467,21 @@ public class ShowPostsController {
                 return tb.compareTo(ta);
             });
         } else if ("Most Commented".equals(sort)) {
-            // Sort by comment count — fetch counts
             filtered.sort((a, b) -> {
                 try {
                     int ca = commentService.findByPostId(a.getPostId()).size();
                     int cb = commentService.findByPostId(b.getPostId()).size();
                     return Integer.compare(cb, ca);
+                } catch (SQLException ex) { return 0; }
+            });
+        } else if ("Most Popular".equals(sort)) {
+            filtered.sort((a, b) -> {
+                try {
+                    int ra = reactionService.getTotalCount(a.getPostId())
+                            + commentService.findByPostId(a.getPostId()).size();
+                    int rb = reactionService.getTotalCount(b.getPostId())
+                            + commentService.findByPostId(b.getPostId()).size();
+                    return Integer.compare(rb, ra);
                 } catch (SQLException ex) { return 0; }
             });
         } else {
@@ -611,11 +623,170 @@ public class ShowPostsController {
             btnComment.setStyle("-fx-background-color:#1A3352;-fx-text-fill:#FFB84D;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:5 12;");
             btnComment.setOnAction(e -> openComments(post));
 
+            // --- Reaction button + counts ---
+            // LinkedIn reactions: emoji + label
+            String[][] REACTIONS = {
+                    {"LIKE",       "👍", "Like"},
+                    {"LOVE",       "❤️", "Love"},
+                    {"CELEBRATE",  "🎉", "Celebrate"},
+                    {"SUPPORT",    "🤝", "Support"},
+                    {"INSIGHTFUL", "💡", "Insightful"},
+                    {"CURIOUS",    "🔥", "Curious"}
+            };
+
+            // Load current user reaction + counts
+            String myReaction = null;
+            java.util.Map<String, Integer> reactionCounts = new java.util.HashMap<>();
+            try {
+                int uid = AppSession.getCurrentUser() != null ? AppSession.getCurrentUser().getUserId() : -1;
+                myReaction = reactionService.getUserReaction(post.getPostId(), uid);
+                reactionCounts.putAll(reactionService.getCounts(post.getPostId()));
+            } catch (Exception ignored) {}
+
+            final String[] currentReaction = {myReaction};
+
+            // Reaction button — shows user's current reaction or default 👍 Like
+            String btnEmoji = "👍";
+            String btnLabel = "Like";
+            if (currentReaction[0] != null) {
+                for (String[] r : REACTIONS) {
+                    if (r[0].equals(currentReaction[0])) { btnEmoji = r[1]; btnLabel = r[2]; break; }
+                }
+            }
+            Button reactionBtn = new Button(btnEmoji + " " + btnLabel);
+            reactionBtn.setStyle(currentReaction[0] != null
+                    ? "-fx-background-color:#1A2A4A;-fx-text-fill:#A78BFA;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:5 12;-fx-font-weight:bold;"
+                    : "-fx-background-color:#1A3352;-fx-text-fill:#A0B4C8;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:5 12;"
+            );
+
+            // Reaction counts label — e.g. "👍 8  ❤️ 3  💡 2"
+            StringBuilder countStr = new StringBuilder();
+            for (String[] r : REACTIONS) {
+                Integer cnt = reactionCounts.get(r[0]);
+                if (cnt != null && cnt > 0) countStr.append(r[1]).append(" ").append(cnt).append("  ");
+            }
+            Label countsLabel = new Label(countStr.toString().trim());
+            countsLabel.setStyle("-fx-text-fill:#607A93;-fx-font-size:11px;");
+
+            // Hover picker popup — horizontal pill of 6 reaction buttons
+            javafx.stage.Popup reactionPicker = new javafx.stage.Popup();
+            HBox pickerBox = new HBox(4);
+            pickerBox.setStyle(
+                    "-fx-background-color:#0F2035;" +
+                            "-fx-border-color:#2A4A6F;" +
+                            "-fx-border-width:1.5;" +
+                            "-fx-border-radius:999;" +
+                            "-fx-background-radius:999;" +
+                            "-fx-padding:8 12;" +
+                            "-fx-effect:dropshadow(gaussian,rgba(0,0,0,0.5),12,0,0,3);"
+            );
+
+            for (String[] r : REACTIONS) {
+                Button rb = new Button(r[1]);
+                rb.setStyle(
+                        "-fx-background-color:transparent;" +
+                                "-fx-font-size:22px;" +
+                                "-fx-cursor:hand;" +
+                                "-fx-padding:2 4;"
+                );
+                Tooltip tip = new Tooltip(r[2]);
+                rb.setTooltip(tip);
+
+                // Scale up on hover
+                rb.setOnMouseEntered(ev -> rb.setStyle(
+                        "-fx-background-color:transparent;-fx-font-size:28px;-fx-cursor:hand;-fx-padding:2 4;"
+                ));
+                rb.setOnMouseExited(ev -> rb.setStyle(
+                        "-fx-background-color:transparent;-fx-font-size:22px;-fx-cursor:hand;-fx-padding:2 4;"
+                ));
+
+                final String rType  = r[0];
+                final String rEmoji = r[1];
+                final String rLabel = r[2];
+
+                rb.setOnAction(ev -> {
+                    reactionPicker.hide();
+                    try {
+                        int uid = AppSession.getCurrentUser().getUserId();
+                        if (rType.equals(currentReaction[0])) {
+                            // Same reaction — toggle off (un-react)
+                            reactionService.delete(post.getPostId(), uid);
+                            currentReaction[0] = null;
+                            reactionBtn.setText("👍 Like");
+                            reactionBtn.setStyle("-fx-background-color:#1A3352;-fx-text-fill:#A0B4C8;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:5 12;");
+                        } else {
+                            // New or changed reaction
+                            reactionService.upsert(post.getPostId(), uid, rType);
+                            currentReaction[0] = rType;
+                            reactionBtn.setText(rEmoji + " " + rLabel);
+                            reactionBtn.setStyle("-fx-background-color:#1A2A4A;-fx-text-fill:#A78BFA;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:5 12;-fx-font-weight:bold;");
+                        }
+                        // Refresh counts label
+                        java.util.Map<String, Integer> newCounts = reactionService.getCounts(post.getPostId());
+                        StringBuilder sb = new StringBuilder();
+                        for (String[] rx : REACTIONS) {
+                            Integer cnt = newCounts.get(rx[0]);
+                            if (cnt != null && cnt > 0) sb.append(rx[1]).append(" ").append(cnt).append("  ");
+                        }
+                        countsLabel.setText(sb.toString().trim());
+                    } catch (Exception ex) {
+                        System.err.println("Reaction error: " + ex.getMessage());
+                    }
+                });
+                pickerBox.getChildren().add(rb);
+            }
+            reactionPicker.getContent().add(pickerBox);
+            reactionPicker.setAutoHide(true);
+
+            // Show picker on hover over reaction button
+            final boolean[] pickerShowing = {false};
+            reactionBtn.setOnMouseEntered(ev -> {
+                if (!pickerShowing[0]) {
+                    javafx.geometry.Bounds b = reactionBtn.localToScreen(reactionBtn.getBoundsInLocal());
+                    reactionPicker.show(reactionBtn.getScene().getWindow(),
+                            b.getMinX() - 10,
+                            b.getMinY() - 68);
+                    pickerShowing[0] = true;
+                }
+            });
+            reactionPicker.setOnHidden(ev -> pickerShowing[0] = false);
+
+            // Click on reaction button itself = quick Like toggle
+            reactionBtn.setOnAction(ev -> {
+                if (reactionPicker.isShowing()) { reactionPicker.hide(); return; }
+                try {
+                    int uid = AppSession.getCurrentUser().getUserId();
+                    if (currentReaction[0] != null) {
+                        reactionService.delete(post.getPostId(), uid);
+                        currentReaction[0] = null;
+                        reactionBtn.setText("👍 Like");
+                        reactionBtn.setStyle("-fx-background-color:#1A3352;-fx-text-fill:#A0B4C8;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:5 12;");
+                    } else {
+                        reactionService.upsert(post.getPostId(), uid, "LIKE");
+                        currentReaction[0] = "LIKE";
+                        reactionBtn.setText("👍 Like");
+                        reactionBtn.setStyle("-fx-background-color:#1A2A4A;-fx-text-fill:#A78BFA;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:5 12;-fx-font-weight:bold;");
+                    }
+                    java.util.Map<String, Integer> newCounts = reactionService.getCounts(post.getPostId());
+                    StringBuilder sb = new StringBuilder();
+                    for (String[] rx : REACTIONS) {
+                        Integer cnt = newCounts.get(rx[0]);
+                        if (cnt != null && cnt > 0) sb.append(rx[1]).append(" ").append(cnt).append("  ");
+                    }
+                    countsLabel.setText(sb.toString().trim());
+                } catch (Exception ex) { System.err.println("Reaction error: " + ex.getMessage()); }
+            });
+
             // ✨ Ask AI button
             Button btnAI = new Button("✨ Ask AI");
             btnAI.setStyle("-fx-background-color:#1A2A4A;-fx-text-fill:#A78BFA;-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:12px;-fx-padding:5 12;-fx-border-color:#4C3A8A;-fx-border-radius:6;-fx-border-width:1;");
 
-            HBox actions = new HBox(8, btnComment, btnAI);
+            HBox actions = new HBox(8, reactionBtn, btnComment, btnAI);
+            // Counts label on the right
+            Pane spacer = new Pane();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+            actions.getChildren().addAll(spacer, countsLabel);
+            actions.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
             if (canEdit(post.getUserId())) {
                 Button btnEdit   = new Button("✏ Edit");
@@ -677,10 +848,26 @@ public class ShowPostsController {
 
             aiPanel.getChildren().addAll(quickActions, askRow, loadingLabel, aiResponse);
 
-            // Helper to call Gemini on background thread
+            // "Post as Comment" button — shown after AI responds
+            Button btnPostComment = new Button("💬 Post as Comment");
+            btnPostComment.setStyle(
+                    "-fx-background-color:#1A3352;-fx-text-fill:#FFB84D;" +
+                            "-fx-background-radius:6;-fx-cursor:hand;-fx-font-size:11px;-fx-padding:4 12;"
+            );
+            btnPostComment.setVisible(false);
+            btnPostComment.setManaged(false);
+            aiPanel.getChildren().add(btnPostComment);
+
+            // Tracks what was asked so we can format the comment
+            String[] lastActionLabel = {""};
+            String[] lastQuestion    = {""};
+
+            // Helper to call Groq on background thread
             Runnable[] pendingTask = {null};
             java.util.function.Consumer<java.util.concurrent.Callable<String>> runAI = task -> {
                 aiResponse.setText("");
+                btnPostComment.setVisible(false);
+                btnPostComment.setManaged(false);
                 loadingLabel.setVisible(true);
                 loadingLabel.setManaged(true);
                 btnFactCheck.setDisable(true);
@@ -700,20 +887,65 @@ public class ShowPostsController {
                         btnSummarize.setDisable(false);
                         btnTopics.setDisable(false);
                         btnAsk.setDisable(false);
+                        // Show post-as-comment button after response arrives
+                        btnPostComment.setVisible(true);
+                        btnPostComment.setManaged(true);
+
+                        // Format comment: question (or action) + AI answer
+                        btnPostComment.setOnAction(ev -> {
+                            String commentText;
+                            if (!lastQuestion[0].isEmpty()) {
+                                commentText = "🤖 AI Q&A\n\n" +
+                                        "❓ " + lastQuestion[0] + "\n\n" +
+                                        "✨ " + finalResult;
+                            } else {
+                                commentText = "🤖 AI " + lastActionLabel[0] + "\n\n" +
+                                        "✨ " + finalResult;
+                            }
+                            try {
+                                var me = AppSession.getCurrentUser();
+                                if (me == null) return;
+                                Comment c = new Comment();
+                                c.setPostId(post.getPostId());
+                                c.setUserId(me.getUserId());
+                                c.setContent(commentText);
+                                commentService.create(c);
+                                btnPostComment.setText("✓ Posted!");
+                                btnPostComment.setStyle(
+                                        "-fx-background-color:#1A4A2E;-fx-text-fill:#4CAF50;" +
+                                                "-fx-background-radius:6;-fx-font-size:11px;-fx-padding:4 12;"
+                                );
+                                btnPostComment.setDisable(true);
+                            } catch (Exception ex) {
+                                btnPostComment.setText("⚠ Failed");
+                            }
+                        });
                     });
                 }).start();
             };
 
-            btnFactCheck.setOnAction(e -> runAI.accept(() ->
-                    geminiService.factCheck(post.getTitle(), post.getContent(), post.getMediaUrl())));
-            btnSummarize.setOnAction(e -> runAI.accept(() ->
-                    geminiService.summarize(post.getTitle(), post.getContent(), post.getMediaUrl())));
-            btnTopics.setOnAction(e -> runAI.accept(() ->
-                    geminiService.suggestTopics(post.getTitle(), post.getContent(), post.getMediaUrl())));
+            btnFactCheck.setOnAction(e -> {
+                lastActionLabel[0] = "Fact-check";
+                lastQuestion[0] = "";
+                runAI.accept(() -> geminiService.factCheck(post.getTitle(), post.getContent(), post.getMediaUrl()));
+            });
+            btnSummarize.setOnAction(e -> {
+                lastActionLabel[0] = "Summary";
+                lastQuestion[0] = "";
+                runAI.accept(() -> geminiService.summarize(post.getTitle(), post.getContent(), post.getMediaUrl()));
+            });
+            btnTopics.setOnAction(e -> {
+                lastActionLabel[0] = "Topic Suggestions";
+                lastQuestion[0] = "";
+                runAI.accept(() -> geminiService.suggestTopics(post.getTitle(), post.getContent(), post.getMediaUrl()));
+            });
             btnAsk.setOnAction(e -> {
                 String q = questionField.getText().trim();
-                if (!q.isEmpty()) runAI.accept(() ->
-                        geminiService.askAboutPost(post.getTitle(), post.getContent(), post.getMediaUrl(), q));
+                if (!q.isEmpty()) {
+                    lastActionLabel[0] = "";
+                    lastQuestion[0] = q;
+                    runAI.accept(() -> geminiService.askAboutPost(post.getTitle(), post.getContent(), post.getMediaUrl(), q));
+                }
             });
             questionField.setOnAction(e -> btnAsk.fire());
 
